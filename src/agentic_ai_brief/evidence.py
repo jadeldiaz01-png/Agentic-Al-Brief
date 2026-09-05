@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
@@ -36,10 +36,23 @@ def create_event(
         "previous_hash": previous_hash,
     }
     event_hash = hashlib.sha256(canonical_json(unsigned)).hexdigest()
-    return EvidenceEvent(**unsigned, event_hash=event_hash)
+    return EvidenceEvent(
+        event_id=event_id,
+        event_type=event_type,
+        payload=payload,
+        occurred_at=occurred_at,
+        previous_hash=previous_hash,
+        event_hash=event_hash,
+    )
 
 
 def verify_event(event: EvidenceEvent) -> bool:
-    data = asdict(event)
-    expected = data.pop("event_hash")
-    return hashlib.sha256(canonical_json(data)).hexdigest() == expected
+    unsigned = {
+        "event_id": event.event_id,
+        "event_type": event.event_type,
+        "payload": event.payload,
+        "occurred_at": event.occurred_at,
+        "previous_hash": event.previous_hash,
+    }
+    computed = hashlib.sha256(canonical_json(unsigned)).hexdigest()
+    return computed == event.event_hash
