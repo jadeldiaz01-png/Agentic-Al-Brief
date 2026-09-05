@@ -3,7 +3,6 @@ from openai.types.shared import Reasoning
 
 from .domain import BriefResult
 
-
 BASE_MODEL = "gpt-5.6-luna"
 
 
