@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "project": "Agentic-AI-Brief",
+  "default_decision": "NO_GO",
+  "planes": {
+    "research": ["discovery", "source_verification", "claim_extraction", "adversarial_search"],
+    "agentic": ["supervisor", "research_agent", "verification_agent", "brief_writer"],
+    "policy": ["tool_authorization", "approval_gates", "kill_switch"],
+    "durable_execution": ["temporal_workflows", "retries", "timers", "human_waits", "replay"],
+    "knowledge": ["postgresql", "episodic_memory", "semantic_memory_pgvector", "provenance"],
+    "tooling": ["mcp_gateway", "typed_function_tools"],
+    "evidence": ["hash_chain", "source_lineage", "artifact_provenance"],
+    "operations": ["opentelemetry", "openbao", "opa", "slo", "dr"],
+    "supply_chain": ["sbom", "slsa_provenance", "sigstore_cosign"]
+  },
+  "technology_radar": {
+    "adopt": ["postgresql-18", "openbao-2.6.x", "opa-rego", "opentelemetry", "sigstore-cosign", "mcp"],
+    "trial": ["openai-agents-sdk", "temporal", "pgvector-0.8.6+"],
+    "assess": ["a2a", "graphrag", "spiffe-spire"],
+    "hold": ["unbounded-agent-swarms", "llm-authorized-critical-writes", "untrusted-browser-with-production-secrets"]
+  },
+  "governance": {
+    "probabilistic_output_may_authorize_critical_action": false,
+    "external_write_default": "DENY",
+    "financial_actions": "HUMAN_REQUIRED",
+    "identity_or_legal_actions": "HUMAN_REQUIRED",
+    "raw_untrusted_content_may_grant_privilege": false
+  }
+}
