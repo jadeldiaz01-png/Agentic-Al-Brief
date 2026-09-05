@@ -32,6 +32,10 @@ packages = ["src/agentic_ai_brief"]
 [tool.ruff]
 line-length = 120
 
+[tool.ruff.lint.isort]
+known-first-party = ["agentic_ai_brief"]
+known-third-party = ["agents", "openai"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
