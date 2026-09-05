@@ -26,15 +26,23 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          patterns=('sk-proj-','OPENAI_API_KEY=sk-','VAULT_TOKEN=hvs.','OPENBAO_TOKEN=hvs.')
+          patterns=(
+              'sk-' + 'proj-',
+              'OPENAI_API_KEY=' + 'sk-',
+              'VAULT_TOKEN=' + 'hvs.',
+              'OPENBAO_TOKEN=' + 'hvs.',
+          )
           hits=[]
           for p in Path('.').rglob('*'):
               if not p.is_file() or '.git' in p.parts:
                   continue
-              try: text=p.read_text(encoding='utf-8')
-              except UnicodeDecodeError: continue
+              try:
+                  text=p.read_text(encoding='utf-8')
+              except UnicodeDecodeError:
+                  continue
               for pat in patterns:
-                  if pat in text: hits.append(f'{p}:{pat}')
+                  if pat in text:
+                      hits.append(f'{p}:{pat[:12]}...')
           if hits:
               print('\n'.join(hits)); raise SystemExit('SECRET_SCAN=FAIL')
           print('SECRET_SCAN=PASS')
