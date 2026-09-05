@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "service": "agentic-ai-brief",
+  "measurement_window_days": 28,
+  "slis": {
+    "availability": "successful_brief_runs / eligible_brief_runs",
+    "correctness": "briefs_passing_quality_gate / completed_briefs",
+    "citation_support": "supported_claims / externally_verifiable_claims",
+    "latency": "end_to_end_brief_duration_seconds",
+    "tool_reliability": "successful_tool_calls / attempted_tool_calls"
+  },
+  "candidate_slos_requiring_runtime_validation": {
+    "availability_target": 0.995,
+    "citation_support_target": 0.99,
+    "unsupported_claim_rate_max": 0.005,
+    "p95_standard_brief_latency_seconds": 120
+  },
+  "policy": {
+    "candidate_targets_are_not_certified": true,
+    "error_budget_required_before_production": true,
+    "quality_regression_overrides_latency_goal": true,
+    "safety_violation_consumes_entire_release_error_budget": true
+  }
+}

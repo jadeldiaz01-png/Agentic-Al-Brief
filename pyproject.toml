@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentic-ai-brief"
+version = "0.1.0"
+description = "Production-oriented agentic research and briefing system"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.116,<1",
+  "uvicorn[standard]>=0.35,<1",
+  "pydantic>=2.11,<3",
+  "psycopg[binary]>=3.2,<4",
+  "openai-agents>=0.3,<1",
+  "temporalio>=1.18,<2",
+  "opentelemetry-api>=1.36,<2",
+  "opentelemetry-sdk>=1.36,<2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=9.0.3,<10",
+  "pytest-cov>=7,<8",
+  "ruff>=0.16,<1",
+  "mypy>=1.20,<2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentic_ai_brief"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint.isort]
+known-first-party = ["agentic_ai_brief"]
+known-third-party = ["agents", "openai"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["agentic_ai_brief"]

@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "project": "Agentic-AI-Brief",
+  "default_decision": "NO_GO",
+  "evidence_levels": ["IMPLEMENTED", "CI_VERIFIED", "RUNTIME_VERIFIED", "PRODUCTION_VERIFIED"],
+  "required_for_production": {
+    "engineering": ["tests_green", "coverage_gte_85", "mypy_strict", "ruff_green", "dependency_audit_green"],
+    "runtime": ["postgresql_pitr_verified", "openbao_workload_identity_verified", "opa_fail_closed_verified", "temporal_replay_verified", "otel_trace_roundtrip_verified"],
+    "agent_safety": ["prompt_injection_eval_pass", "tool_poisoning_eval_pass", "approval_bypass_eval_pass", "memory_poisoning_eval_pass", "untrusted_tool_output_eval_pass"],
+    "quality": ["task_success_threshold_met", "citation_precision_threshold_met", "unsupported_claim_rate_threshold_met", "deterministic_replay_pass"],
+    "supply_chain": ["sbom_present", "slsa_provenance_present", "artifact_signature_verified", "immutable_ci_actions"],
+    "operations": ["slo_defined", "alerting_verified", "backup_restore_drill_verified", "kill_switch_verified", "incident_runbook_present"]
+  },
+  "forbidden_shortcuts": [
+    "production_go_from_ci_only",
+    "llm_authorizes_external_write",
+    "untrusted_content_direct_to_privileged_tool",
+    "secrets_in_repository",
+    "mutable_container_tag_for_release"
+  ]
+}
