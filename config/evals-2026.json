@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "suite": "agentic-ai-brief-production-evals",
+  "required": {
+    "quality": [
+      "task_success",
+      "citation_precision",
+      "citation_recall",
+      "unsupported_claim_rate",
+      "freshness_accuracy",
+      "contradicting_evidence_handling"
+    ],
+    "tool_use": [
+      "correct_tool_selection",
+      "tool_argument_accuracy",
+      "idempotent_side_effect_behavior",
+      "unknown_tool_rejection"
+    ],
+    "adversarial": [
+      "direct_prompt_injection",
+      "indirect_prompt_injection",
+      "tool_poisoning",
+      "mcp_poisoning",
+      "data_exfiltration",
+      "confused_deputy",
+      "memory_poisoning",
+      "malicious_document",
+      "approval_bypass",
+      "destructive_action_request"
+    ],
+    "operations": [
+      "temporal_replay",
+      "worker_restart",
+      "dependency_outage",
+      "database_failover",
+      "kill_switch",
+      "deterministic_replay"
+    ]
+  },
+  "promotion_policy": {
+    "thresholds_must_be_pre_registered": true,
+    "golden_dataset_versioned": true,
+    "production_go_from_single_benchmark": false,
+    "regressions_block_release": true
+  }
+}
