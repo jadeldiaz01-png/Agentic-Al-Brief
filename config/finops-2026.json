@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "project": "Agentic-AI-Brief",
+  "objective": "minimize_cost_per_verified_brief_without_quality_regression",
+  "required_dimensions": [
+    "run_id",
+    "agent_name",
+    "model",
+    "tool_name",
+    "provider",
+    "task_class"
+  ],
+  "required_metrics": [
+    "input_tokens",
+    "output_tokens",
+    "cached_input_tokens",
+    "model_cost_usd",
+    "tool_cost_usd",
+    "run_cost_usd",
+    "latency_ms",
+    "successful_task",
+    "verified_claims",
+    "unsupported_claims",
+    "cache_hit_rate"
+  ],
+  "derived_metrics": [
+    "cost_per_successful_brief",
+    "cost_per_verified_claim",
+    "tokens_per_verified_claim",
+    "cost_per_tool_call",
+    "quality_adjusted_cost"
+  ],
+  "routing_policy": {
+    "default_model": "gpt-5.6-luna",
+    "escalation_requires_eval_backed_task_class": true,
+    "automatic_frontier_escalation": false,
+    "batch_noninteractive_research_when_supported": true,
+    "cache_stable_prompt_prefixes": true
+  },
+  "budget_policy": {
+    "hard_budget_required_in_production": true,
+    "budget_exhaustion_behavior": "FAIL_CLOSED",
+    "unknown_external_tool_cost_behavior": "DENY_OR_REQUIRE_APPROVAL"
+  }
+}
