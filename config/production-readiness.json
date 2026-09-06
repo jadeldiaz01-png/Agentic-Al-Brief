@@ -1,11 +1,12 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "project": "Agentic-AI-Brief",
   "default_decision": "NO_GO",
   "evidence_levels": ["IMPLEMENTED", "CI_VERIFIED", "RUNTIME_VERIFIED", "PRODUCTION_VERIFIED"],
   "required_for_production": {
     "engineering": ["tests_green", "coverage_gte_85", "mypy_strict", "ruff_green", "dependency_audit_green"],
     "runtime": [
+      "runner_security_verified",
       "postgresql_pitr_verified",
       "openbao_workload_identity_verified",
       "opa_fail_closed_verified",
@@ -19,13 +20,14 @@
     "operations": ["slo_defined", "alerting_verified", "backup_restore_drill_verified", "kill_switch_verified", "incident_runbook_present"]
   },
   "promotion_rules": {
-    "ci_to_runtime": "all runtime and supply-chain runtime gates require immutable evidence refs bound to exact source SHA",
+    "ci_to_runtime": "all runtime and supply-chain runtime gates require immutable evidence refs bound to exact source SHA; public-repository runtime runners must also prove ephemeral/JIT single-job isolation",
     "runtime_to_production": "requires separate safety, quality, SLO, DR and sustained-operation evidence",
     "boolean_claim_without_evidence_ref": "DENY"
   },
   "forbidden_shortcuts": [
     "production_go_from_ci_only",
     "runtime_verified_from_configuration_only",
+    "persistent_self_hosted_runner_on_public_repo_for_privileged_runtime",
     "llm_authorizes_external_write",
     "untrusted_content_direct_to_privileged_tool",
     "secrets_in_repository",
