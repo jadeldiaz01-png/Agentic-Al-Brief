@@ -1,0 +1,29 @@
+name: cloudflare-connection-preflight
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/p0g-cloudflare-token-preflight
+
+permissions:
+  contents: read
+
+jobs:
+  cloudflare-preflight:
+    runs-on: ubuntu-24.04
+    environment: agentic-ai-brief-runtime
+    timeout-minutes: 5
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CF_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || secrets.CF_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Verify Cloudflare token and read-only runtime capabilities
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/cloudflare_connection_preflight.py
