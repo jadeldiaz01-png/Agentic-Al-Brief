@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "project": "Agentic-AI-Brief",
+  "increment": "P0-C-first-real-certified-runtime-execution",
+  "baseline_sha": "eb749e5911f7586226a4ba8da442e86ec675b379",
+  "default_decision": "NO_GO",
+  "runner_labels": ["self-hosted", "linux", "x64", "agentic-ai-brief-runtime"],
+  "required_artifacts": {
+    "postgresql_pitr_verified": "postgresql-pitr.json",
+    "openbao_workload_identity_verified": "openbao-identity.json",
+    "opa_fail_closed_verified": "opa-enforcement.json",
+    "temporal_replay_verified": "temporal-replay.json",
+    "otel_trace_roundtrip_verified": "otel-roundtrip.json",
+    "crash_recovery_verified": "crash-recovery.json",
+    "artifact_signature_verified": "artifact-signature.json",
+    "sbom_verified": "sbom-verification.json",
+    "slsa_provenance_verified": "slsa-provenance-verification.json"
+  },
+  "artifact_contract": {
+    "exact_source_sha_required": true,
+    "verified_must_be_true": true,
+    "generated_at_utc_required": true,
+    "raw_secrets_forbidden": true,
+    "sha256_binding_required": true
+  },
+  "promotion": {
+    "from": "CI_VERIFIED",
+    "to": "RUNTIME_VERIFIED",
+    "requires_every_artifact": true,
+    "production_go": false
+  }
+}
