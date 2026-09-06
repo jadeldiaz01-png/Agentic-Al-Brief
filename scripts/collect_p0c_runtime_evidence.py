@@ -72,12 +72,14 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _load_verified(path: Path, gate: str, expected_sha: str) -> dict[str, Any]:
+def _load_verified(path: Path, gate: str, expected_sha: str, execution_id: str) -> dict[str, Any]:
     raw = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise TypeError(f"{path.name}:INVALID_JSON_OBJECT")
     if raw.get("source_sha") != expected_sha:
         raise ValueError(f"{path.name}:SOURCE_SHA_MISMATCH")
+    if raw.get("execution_id") != execution_id:
+        raise ValueError(f"{path.name}:EXECUTION_ID_MISMATCH")
     if raw.get("verified") is not True:
         raise ValueError(f"{path.name}:NOT_VERIFIED")
     generated_at = raw.get("generated_at_utc")
@@ -95,13 +97,13 @@ def _load_verified(path: Path, gate: str, expected_sha: str) -> dict[str, Any]:
     return raw
 
 
-def build_bundle(evidence_dir: Path, expected_sha: str) -> dict[str, Any]:
+def build_bundle(evidence_dir: Path, expected_sha: str, execution_id: str) -> dict[str, Any]:
     evidence: dict[str, Any] = {}
     for gate, filename in ARTIFACTS.items():
         path = evidence_dir / filename
         if not path.is_file() or path.is_symlink():
             raise FileNotFoundError(f"{filename}:MISSING_OR_UNSAFE")
-        _load_verified(path, gate, expected_sha)
+        _load_verified(path, gate, expected_sha, execution_id)
         evidence[gate] = {
             "verified": True,
             "evidence_ref": f"sha256:{_sha256(path)}",
@@ -110,6 +112,7 @@ def build_bundle(evidence_dir: Path, expected_sha: str) -> dict[str, Any]:
     return {
         "schema_version": "1.0.0",
         "source_sha": expected_sha,
+        "execution_id": execution_id,
         "generated_at_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "evidence": evidence,
     }
@@ -119,9 +122,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--evidence-dir", required=True)
     parser.add_argument("--expected-sha", required=True)
+    parser.add_argument("--execution-id", required=True)
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
-    bundle = build_bundle(Path(args.evidence_dir), args.expected_sha)
+    bundle = build_bundle(Path(args.evidence_dir), args.expected_sha, args.execution_id)
     Path(args.output).write_text(json.dumps(bundle, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     return 0
 
