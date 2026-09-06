@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "project": "Agentic-AI-Brief",
+  "increment": "P0-B-durable-production-evidence-runtime",
+  "default_decision": "NO_GO",
+  "source_binding": {
+    "exact_git_sha_required": true,
+    "runtime_deploy_by_digest_required": true
+  },
+  "required_runtime_evidence": [
+    "postgresql_pitr_verified",
+    "openbao_workload_identity_verified",
+    "opa_fail_closed_verified",
+    "temporal_replay_verified",
+    "otel_trace_roundtrip_verified",
+    "crash_recovery_verified",
+    "artifact_signature_verified",
+    "sbom_verified",
+    "slsa_provenance_verified"
+  ],
+  "evidence_rules": {
+    "boolean_without_evidence_ref_is_proof": false,
+    "evidence_ref_format": "sha256:<64 lowercase hex>",
+    "raw_secrets_allowed": false,
+    "raw_runtime_evidence_committed_to_repo": false,
+    "production_go_from_runtime_verified_only": false
+  },
+  "promotion": {
+    "from": "CI_VERIFIED",
+    "to": "RUNTIME_VERIFIED",
+    "requires_all_runtime_evidence": true,
+    "production_verified_requires_separate_gate": true
+  }
+}
