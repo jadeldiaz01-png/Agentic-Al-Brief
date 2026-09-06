@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
+import stat
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -74,12 +76,32 @@ REQUIRED_ASSERTIONS = {
     ),
 }
 
+FORBIDDEN_SECRET_KEYS = {"token", "password", "secret", "api_key", "private_key"}
+SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
+
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _contains_forbidden_key(value: Any) -> bool:
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if str(key).lower() in FORBIDDEN_SECRET_KEYS or _contains_forbidden_key(item):
+                return True
+    elif isinstance(value, list):
+        return any(_contains_forbidden_key(item) for item in value)
+    return False
+
+
+def _require_secure_file(path: Path) -> None:
+    mode = stat.S_IMODE(path.stat().st_mode)
+    if mode & 0o037:
+        raise PermissionError(f"{path.name}:INSECURE_PERMISSIONS:{mode:o}")
+
+
 def _load_verified(path: Path, gate: str, expected_sha: str, execution_id: str) -> dict[str, Any]:
+    _require_secure_file(path)
     raw = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise TypeError(f"{path.name}:INVALID_JSON_OBJECT")
@@ -92,8 +114,7 @@ def _load_verified(path: Path, gate: str, expected_sha: str, execution_id: str) 
     generated_at = raw.get("generated_at_utc")
     if not isinstance(generated_at, str) or not generated_at.endswith("Z"):
         raise ValueError(f"{path.name}:INVALID_GENERATED_AT_UTC")
-    lowered_keys = {str(key).lower() for key in raw}
-    if lowered_keys & {"token", "password", "secret", "api_key", "private_key"}:
+    if _contains_forbidden_key(raw):
         raise ValueError(f"{path.name}:SECRET_MATERIAL_FORBIDDEN")
     assertions = raw.get("assertions")
     if not isinstance(assertions, dict):
@@ -105,6 +126,16 @@ def _load_verified(path: Path, gate: str, expected_sha: str, execution_id: str) 
 
 
 def build_bundle(evidence_dir: Path, expected_sha: str, execution_id: str) -> dict[str, Any]:
+    if SHA_PATTERN.fullmatch(expected_sha) is None:
+        raise ValueError("EXPECTED_SHA_INVALID")
+    if not execution_id or len(execution_id) > 128:
+        raise ValueError("EXECUTION_ID_INVALID")
+    if not evidence_dir.is_dir() or evidence_dir.is_symlink():
+        raise FileNotFoundError("EVIDENCE_DIR_MISSING_OR_UNSAFE")
+    directory_mode = stat.S_IMODE(evidence_dir.stat().st_mode)
+    if directory_mode & 0o027:
+        raise PermissionError(f"EVIDENCE_DIR_INSECURE_PERMISSIONS:{directory_mode:o}")
+
     evidence: dict[str, Any] = {}
     for gate, filename in ARTIFACTS.items():
         path = evidence_dir / filename
@@ -117,7 +148,7 @@ def build_bundle(evidence_dir: Path, expected_sha: str, execution_id: str) -> di
             "artifact": filename,
         }
     return {
-        "schema_version": "1.1.0",
+        "schema_version": "1.2.0",
         "source_sha": expected_sha,
         "execution_id": execution_id,
         "generated_at_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
