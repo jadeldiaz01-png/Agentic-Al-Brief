@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.collect_p0c_runtime_evidence import ARTIFACTS, REQUIRED_ASSERTIONS, build_bundle
+from agentic_ai_brief.p0c_evidence import ARTIFACTS, REQUIRED_ASSERTIONS, build_bundle
 
 EXECUTION_ID = "p0c-test-execution"
 
