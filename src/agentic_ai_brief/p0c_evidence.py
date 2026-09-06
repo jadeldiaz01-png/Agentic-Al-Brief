@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 ARTIFACTS = {
+    "runner_security_verified": "runner-security.json",
     "postgresql_pitr_verified": "postgresql-pitr.json",
     "openbao_workload_identity_verified": "openbao-identity.json",
     "opa_fail_closed_verified": "opa-enforcement.json",
@@ -19,6 +20,13 @@ ARTIFACTS = {
 }
 
 REQUIRED_ASSERTIONS = {
+    "runner_security_verified": (
+        "ephemeral_or_jit_verified",
+        "single_job_lifecycle_verified",
+        "pull_request_trigger_absent",
+        "clean_execution_environment_verified",
+        "external_runner_logs_verified",
+    ),
     "postgresql_pitr_verified": (
         "wal_archiving_verified",
         "base_backup_verified",
@@ -109,7 +117,7 @@ def build_bundle(evidence_dir: Path, expected_sha: str, execution_id: str) -> di
             "artifact": filename,
         }
     return {
-        "schema_version": "1.0.0",
+        "schema_version": "1.1.0",
         "source_sha": expected_sha,
         "execution_id": execution_id,
         "generated_at_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
