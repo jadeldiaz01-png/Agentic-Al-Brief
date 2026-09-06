@@ -41,5 +41,5 @@ class AgenticAIBriefWorkflow:
             start_to_close_timeout=timedelta(minutes=5),
         )
         if not isinstance(result, dict):
-            raise RuntimeError("INVALID_ACTIVITY_RESULT")
+            raise TypeError("INVALID_ACTIVITY_RESULT")
         return result
