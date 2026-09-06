@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 REQUIRED_RUNTIME_GATES = (
+    "runner_security_verified",
     "postgresql_pitr_verified",
     "openbao_workload_identity_verified",
     "opa_fail_closed_verified",
