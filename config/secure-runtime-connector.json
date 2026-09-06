@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "connector_id": "tailscale-github-jit-kubernetes",
+  "purpose": "Private, fail-closed connectivity from an ephemeral GitHub Actions runner to the Agentic-AI-Brief runtime/Kubernetes control plane without exposing SSH or the Kubernetes API publicly.",
+  "provider": "tailscale",
+  "cost_target": "free_personal_plan",
+  "transport": {
+    "public_inbound_ports_required": false,
+    "ssh_public_internet_required": false,
+    "kubernetes_public_api_required": false,
+    "runner_lifecycle": "jit_or_ephemeral_single_job",
+    "tls_verification_required": true
+  },
+  "identity": {
+    "static_long_lived_secrets_forbidden": true,
+    "tailscale_ephemeral_identity_preferred": true,
+    "github_jit_runner_required": true,
+    "kubernetes_service_account_or_short_lived_exec_credential_required": true
+  },
+  "authorization": {
+    "default": "DENY",
+    "namespace_allowlist": ["agentic-ai-brief-runtime"],
+    "allowed_kubernetes_verbs": ["get", "list", "watch", "create", "update", "patch", "delete"],
+    "cluster_admin_forbidden": true,
+    "wildcard_rbac_forbidden": true,
+    "secrets_read_forbidden": true,
+    "exec_into_unrelated_pods_forbidden": true
+  },
+  "required_preflight": [
+    "tailscale_connected",
+    "tailscale_peer_identity_verified",
+    "kubectl_context_verified",
+    "namespace_scope_verified",
+    "cluster_admin_absent",
+    "secrets_read_absent",
+    "runtime_namespace_reachable"
+  ],
+  "promotion": {
+    "connector_ready": "all required_preflight checks pass in one ephemeral/JIT execution",
+    "runtime_verified": "not implied by connector readiness"
+  }
+}
