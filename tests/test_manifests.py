@@ -14,6 +14,8 @@ def test_production_readiness_requires_runtime_and_safety() -> None:
     data = json.loads(Path("config/production-readiness.json").read_text(encoding="utf-8"))
     required = data["required_for_production"]
     assert "temporal_replay_verified" in required["runtime"]
+    assert "crash_recovery_verified" in required["runtime"]
     assert "prompt_injection_eval_pass" in required["agent_safety"]
-    assert "slsa_provenance_present" in required["supply_chain"]
+    assert "slsa_provenance_verified" in required["supply_chain"]
+    assert "deployment_digest_verified" in required["supply_chain"]
     assert "kill_switch_verified" in required["operations"]

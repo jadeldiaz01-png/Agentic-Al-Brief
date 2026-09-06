@@ -1,0 +1,56 @@
+name: runtime-evidence-gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact source SHA deployed in the runtime
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  EVIDENCE_PATH: /var/lib/agentic-ai-brief/runtime-evidence.json
+
+jobs:
+  certify:
+    runs-on: [self-hosted, linux, x64, agentic-ai-brief-runtime]
+    environment: agentic-ai-brief-runtime
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.expected_sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Verify exact checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ inputs.expected_sha }}"
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install certifier
+        run: python -m pip install -e .
+      - name: Require runtime-owned evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$EVIDENCE_PATH"
+          test ! -L "$EVIDENCE_PATH"
+          test "$(stat -c '%a' "$EVIDENCE_PATH")" -le 640
+      - name: Certify runtime evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          python scripts/certify_runtime_evidence.py \
+            --bundle "$EVIDENCE_PATH" \
+            --expected-sha "${{ inputs.expected_sha }}" \
+            --output /tmp/runtime-certificate.json
+          cat /tmp/runtime-certificate.json
+          rm -f /tmp/runtime-certificate.json
