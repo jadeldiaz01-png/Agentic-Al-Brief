@@ -1,14 +1,10 @@
 import asyncio
-from collections.abc import Awaitable, Callable
 from typing import Any
 
 import pytest
 from temporalio import workflow
 
 from agentic_ai_brief.temporal_workflow import AgenticAIBriefWorkflow, DurableBriefRequest
-
-
-ActivityStub = Callable[..., Awaitable[object]]
 
 
 def _request() -> DurableBriefRequest:
