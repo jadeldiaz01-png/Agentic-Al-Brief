@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   preflight:
@@ -34,6 +35,13 @@ jobs:
         run: |
           set -euo pipefail
           test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+      - name: Connect ephemeral Tailscale node with GitHub OIDC
+        uses: tailscale/github-action@780049a30b6ff5c378a9e7b389d15ece7a204888
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:agentic-ai-brief-runtime
+          use-cache: "false"
       - name: Run fail-closed connector preflight
         shell: bash
         run: |
