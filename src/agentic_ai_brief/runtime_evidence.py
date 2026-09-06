@@ -5,7 +5,6 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-
 REQUIRED_RUNTIME_GATES = (
     "postgresql_pitr_verified",
     "openbao_workload_identity_verified",
