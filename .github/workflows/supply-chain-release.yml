@@ -1,0 +1,77 @@
+name: supply-chain-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact source SHA to build and attest
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  attest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.expected_sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Verify exact source SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ inputs.expected_sha }}"
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install build tooling
+        run: python -m pip install -e '.[dev]'
+      - name: Reproducibility gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          python -m build --wheel --outdir /tmp/build-a
+          python -m build --wheel --outdir /tmp/build-b
+          A="$(find /tmp/build-a -type f -name '*.whl' -print -quit)"
+          B="$(find /tmp/build-b -type f -name '*.whl' -print -quit)"
+          test -n "$A" && test -n "$B"
+          test "$(sha256sum "$A" | cut -d' ' -f1)" = "$(sha256sum "$B" | cut -d' ' -f1)"
+          cp "$A" /tmp/agentic-ai-brief.whl
+      - name: Generate CycloneDX SBOM
+        shell: bash
+        run: |
+          set -euo pipefail
+          cyclonedx-py environment --output-format JSON --output-file /tmp/sbom.cdx.json
+          python -m json.tool /tmp/sbom.cdx.json >/dev/null
+      - name: Generate SLSA-formatted in-toto provenance
+        run: |
+          python scripts/create_build_provenance.py \
+            --source-sha "${{ inputs.expected_sha }}" \
+            --artifact /tmp/agentic-ai-brief.whl \
+            --sbom /tmp/sbom.cdx.json \
+            --output /tmp/provenance.intoto.json
+      - uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22
+        with:
+          cosign-release: 'v3.0.2'
+      - name: Sign and immediately verify artifacts keylessly
+        shell: bash
+        run: |
+          set -euo pipefail
+          for artifact in /tmp/agentic-ai-brief.whl /tmp/sbom.cdx.json /tmp/provenance.intoto.json; do
+            bundle="${artifact}.sigstore.json"
+            cosign sign-blob --yes --bundle "$bundle" "$artifact"
+            cosign verify-blob \
+              --bundle "$bundle" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+              --certificate-identity-regexp '^https://github.com/jadeldiaz01-png/Agentic-Al-Brief/.*$' \
+              "$artifact"
+            sha256sum "$artifact" "$bundle"
+          done
