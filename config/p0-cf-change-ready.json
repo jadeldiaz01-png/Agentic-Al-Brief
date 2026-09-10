@@ -1,0 +1,108 @@
+{
+  "schema_version": "1.0.0",
+  "gate_id": "P0-CF-CHANGE-READY",
+  "default_decision": "NO_GO",
+  "target_namespace": "agentic-ai-brief-runtime",
+  "source_sha_binding_required": true,
+  "cloudflared": {
+    "selected_release": "2026.8.3",
+    "selection_basis": "latest GitHub release observed during 2026-09-10 review; newer Docker tags require separate release adjudication",
+    "image": "cloudflare/cloudflared@sha256:51c9cefcb4569df44e1ad403ab1d3d8065aa8e84339bcfc6aee75502e1140339",
+    "multiarch_index_digest": "sha256:51c9cefcb4569df44e1ad403ab1d3d8065aa8e84339bcfc6aee75502e1140339",
+    "linux_amd64_manifest_digest": "sha256:9be48e4b4e996da851bf78f7782bfab150dd4d8889e469d004802e7d7afb63b1",
+    "linux_arm64_manifest_digest": "sha256:4ecc4283c0f7cc127522e5ef261595cfe8571ee28f5c8d3751b24f52f9d04ebe",
+    "automatic_update_disabled": true,
+    "run_as_non_root": true,
+    "uid": 65532,
+    "gid": 65532,
+    "replicas": 2,
+    "autoscaling_forbidden": true
+  },
+  "openbao": {
+    "integration": "csi_secrets_store",
+    "provider": "openbao",
+    "secret_provider_class": "cloudflared-runtime-token",
+    "auth_role": "cloudflared-runtime",
+    "secret_path": "kv/data/agentic-ai-brief/cloudflare-tunnel",
+    "secret_key": "token",
+    "kubernetes_secret_sync_forbidden": true,
+    "dedicated_service_account_required": true,
+    "short_lived_service_account_token_required": true,
+    "static_long_lived_kubernetes_token_forbidden": true
+  },
+  "kubernetes": {
+    "service_account": "cloudflared-runtime",
+    "automount_default_service_account_token": false,
+    "cluster_admin_forbidden": true,
+    "wildcard_rbac_forbidden": true,
+    "secrets_read_forbidden": true,
+    "pod_security": {
+      "allow_privilege_escalation": false,
+      "read_only_root_filesystem": true,
+      "drop_all_capabilities": true,
+      "seccomp_profile": "RuntimeDefault"
+    },
+    "availability": {
+      "pod_disruption_budget_min_available": 1,
+      "topology_spread_required": true
+    }
+  },
+  "network": {
+    "public_ingress_required": false,
+    "default_deny_ingress": true,
+    "cloudflared_egress_port": 7844,
+    "cloudflared_egress_protocols": ["TCP", "UDP"],
+    "required_cloudflare_ipv4_cidrs": ["198.41.192.0/24", "198.41.200.0/24"],
+    "dns_egress_required": true,
+    "host_or_edge_firewall_must_restrict_to_cloudflare_destinations": true,
+    "standard_networkpolicy_fqdn_limitation_acknowledged": true
+  },
+  "r2": {
+    "bucket": "agentic-ai-brief-runtime-evidence",
+    "prefix": "runtime-evidence/",
+    "public_access_forbidden": true,
+    "bucket_lock_required_before_evidence_write": true,
+    "minimum_lock_seconds": 7776000,
+    "temporary_credentials_required": true,
+    "temporary_permission": "object-read-write",
+    "temporary_prefixes": ["runtime-evidence/"],
+    "temporary_ttl_seconds": 900,
+    "parent_access_key_must_be_dedicated_and_bucket_scoped": true,
+    "control_plane_token_as_s3_credential_forbidden": true
+  },
+  "required_change_ready_gates": [
+    "manual_workflow_dispatch_verified",
+    "exact_source_sha_verified",
+    "github_hosted_ephemeral_runner_verified",
+    "tailscale_federated_identity_verified",
+    "kubernetes_context_verified",
+    "namespace_verified",
+    "cluster_admin_absent",
+    "secrets_read_absent",
+    "cloudflared_image_digest_exact",
+    "openbao_csi_driver_present",
+    "openbao_csi_provider_present",
+    "openbao_secret_provider_class_contract_valid",
+    "dedicated_service_account_contract_valid",
+    "networkpolicy_contract_valid",
+    "cloudflare_7844_tcp_reachable",
+    "cloudflare_7844_udp_policy_declared",
+    "r2_target_state_known",
+    "r2_parent_credential_presence_verified_without_value_disclosure",
+    "r2_temporary_credential_mint_plan_valid",
+    "r2_bucket_lock_plan_valid",
+    "rollback_plan_present",
+    "writes_still_disabled"
+  ],
+  "change_ready_decision": "all required_change_ready_gates must be true in the same execution",
+  "non_destructive_creation_policy": {
+    "create_only_if_absent": true,
+    "adopt_only_if_exact_contract_matches": true,
+    "delete_forbidden": true,
+    "overwrite_existing_resource_forbidden": true,
+    "dns_mutation_forbidden_in_first_change": true,
+    "explicit_human_confirmation_required": true,
+    "confirmation_phrase": "CREATE_CLOUDFLARE_RUNTIME_RESOURCES",
+    "production_promotion_from_creation_forbidden": true
+  }
+}
