@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "project": "Agentic-AI-Brief",
   "default_decision": "NO_GO",
-  "evidence_levels": ["IMPLEMENTED", "CI_VERIFIED", "RUNTIME_VERIFIED", "PRODUCTION_VERIFIED"],
+  "evidence_levels": ["IMPLEMENTED", "CI_VERIFIED", "CONNECTION_VERIFIED", "DISCOVERY_VERIFIED", "RUNTIME_VERIFIED", "PRODUCTION_VERIFIED"],
   "required_for_production": {
     "engineering": ["tests_green", "coverage_gte_85", "mypy_strict", "ruff_green", "dependency_audit_green"],
     "runtime": [
@@ -12,15 +12,23 @@
       "opa_fail_closed_verified",
       "temporal_replay_verified",
       "otel_trace_roundtrip_verified",
-      "crash_recovery_verified"
+      "crash_recovery_verified",
+      "cloudflare_connection_verified",
+      "cloudflare_runtime_discovery_verified",
+      "cloudflare_tunnel_runtime_verified",
+      "r2_evidence_store_verified",
+      "r2_bucket_lock_verified"
     ],
     "agent_safety": ["prompt_injection_eval_pass", "tool_poisoning_eval_pass", "approval_bypass_eval_pass", "memory_poisoning_eval_pass", "untrusted_tool_output_eval_pass"],
     "quality": ["task_success_threshold_met", "citation_precision_threshold_met", "unsupported_claim_rate_threshold_met", "deterministic_replay_pass"],
-    "supply_chain": ["sbom_verified", "slsa_provenance_verified", "artifact_signature_verified", "immutable_ci_actions", "deployment_digest_verified"],
-    "operations": ["slo_defined", "alerting_verified", "backup_restore_drill_verified", "kill_switch_verified", "incident_runbook_present"]
+    "supply_chain": ["sbom_verified", "slsa_provenance_verified", "artifact_signature_verified", "immutable_ci_actions", "deployment_digest_verified", "cloudflared_image_digest_verified"],
+    "operations": ["slo_defined", "alerting_verified", "backup_restore_drill_verified", "kill_switch_verified", "incident_runbook_present", "cloudflare_tunnel_failover_drill_verified", "cloudflare_credential_rotation_drill_verified", "r2_retention_enforcement_drill_verified"]
   },
   "promotion_rules": {
     "ci_to_runtime": "all runtime and supply-chain runtime gates require immutable evidence refs bound to exact source SHA; public-repository runtime runners must also prove ephemeral/JIT single-job isolation",
+    "cloudflare_connection_to_discovery": "requires active account-scoped token, valid account id, jadeltechrd.com zone read, Tunnel API read, R2 API read and GET-only exact target-state discovery",
+    "cloudflare_discovery_to_change_ready": "requires explicit human change approval, exact source SHA, immutable cloudflared image digest, OpenBao tunnel-token handling, least-privilege Kubernetes identity, egress-only firewall proof, scoped R2 parent credential, temporary R2 credential proof, bucket-lock plan and rollback plan",
+    "cloudflare_change_to_runtime_verified": "requires real target resources plus tunnel HA/failover, R2 checksum roundtrip, retention enforcement, credential rotation and OTel evidence; configuration or CI success is insufficient",
     "runtime_to_production": "requires separate safety, quality, SLO, DR and sustained-operation evidence",
     "boolean_claim_without_evidence_ref": "DENY"
   },
@@ -31,6 +39,10 @@
     "llm_authorizes_external_write",
     "untrusted_content_direct_to_privileged_tool",
     "secrets_in_repository",
-    "mutable_container_tag_for_release"
+    "mutable_container_tag_for_release",
+    "cloudflare_write_before_change_gate",
+    "cloudflare_tunnel_token_in_github",
+    "r2_evidence_write_before_bucket_lock",
+    "r2_control_plane_token_reused_as_runtime_data_plane_credential"
   ]
 }
