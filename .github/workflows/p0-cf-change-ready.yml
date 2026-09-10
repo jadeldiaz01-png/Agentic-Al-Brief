@@ -1,0 +1,99 @@
+name: p0-cf-change-ready
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact 40-character source SHA to certify
+        required: true
+        type: string
+      expected_context:
+        description: Exact kubectl context name
+        required: true
+        type: string
+      runtime_namespace:
+        description: Runtime namespace
+        required: true
+        default: agentic-ai-brief-runtime
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  change-ready:
+    runs-on: ubuntu-24.04
+    environment: agentic-ai-brief-runtime
+    timeout-minutes: 15
+    env:
+      EXPECTED_SHA: ${{ inputs.expected_sha }}
+      EXPECTED_KUBE_CONTEXT: ${{ inputs.expected_context }}
+      RUNTIME_NAMESPACE: ${{ inputs.runtime_namespace }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      R2_PARENT_ACCESS_KEY_ID: ${{ secrets.R2_PARENT_ACCESS_KEY_ID }}
+      R2_PARENT_API_TOKEN: ${{ secrets.R2_PARENT_API_TOKEN }}
+    steps:
+      - name: Reject non-manual execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = workflow_dispatch
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.expected_sha }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Bind exact source SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          echo "SOURCE_SHA_BOUND=YES"
+
+      - name: Verify Cloudflare control-plane connection remains valid
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/cloudflare_connection_preflight.py
+          python scripts/cloudflare_runtime_discovery.py
+
+      - name: Connect ephemeral Tailscale node with GitHub OIDC
+        uses: tailscale/github-action@780049a30b6ff5c378a9e7b389d15ece7a204888
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:agentic-ai-brief-runtime
+          use-cache: "false"
+
+      - name: Materialize job-only kubeconfig
+        shell: bash
+        env:
+          KUBECONFIG_B64: ${{ secrets.RUNTIME_KUBECONFIG_B64 }}
+        run: |
+          set -euo pipefail
+          test -n "${KUBECONFIG_B64:-}"
+          umask 077
+          printf '%s' "$KUBECONFIG_B64" | base64 --decode > "$RUNNER_TEMP/runtime-kubeconfig"
+          chmod 0600 "$RUNNER_TEMP/runtime-kubeconfig"
+          echo "KUBECONFIG=$RUNNER_TEMP/runtime-kubeconfig" >> "$GITHUB_ENV"
+          unset KUBECONFIG_B64
+
+      - name: Execute fail-closed P0-CF change-ready checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/p0_cf_change_ready_preflight.sh
+
+      - name: Destroy transient kubeconfig
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${KUBECONFIG:-}" ] && [ -f "$KUBECONFIG" ]; then
+            shred -u "$KUBECONFIG" 2>/dev/null || rm -f "$KUBECONFIG"
+          fi

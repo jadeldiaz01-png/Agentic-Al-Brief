@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.3.0",
+  "schema_version": "1.4.0",
   "project": "Agentic-AI-Brief",
   "default_decision": "NO_GO",
-  "evidence_levels": ["IMPLEMENTED", "CI_VERIFIED", "CONNECTION_VERIFIED", "DISCOVERY_VERIFIED", "RUNTIME_VERIFIED", "PRODUCTION_VERIFIED"],
+  "evidence_levels": ["IMPLEMENTED", "CI_VERIFIED", "CONNECTION_VERIFIED", "DISCOVERY_VERIFIED", "CHANGE_READY", "RUNTIME_VERIFIED", "PRODUCTION_VERIFIED"],
   "required_for_production": {
     "engineering": ["tests_green", "coverage_gte_85", "mypy_strict", "ruff_green", "dependency_audit_green"],
     "runtime": [
@@ -15,6 +15,7 @@
       "crash_recovery_verified",
       "cloudflare_connection_verified",
       "cloudflare_runtime_discovery_verified",
+      "p0_cf_change_ready_verified",
       "cloudflare_tunnel_runtime_verified",
       "r2_evidence_store_verified",
       "r2_bucket_lock_verified"
@@ -27,7 +28,8 @@
   "promotion_rules": {
     "ci_to_runtime": "all runtime and supply-chain runtime gates require immutable evidence refs bound to exact source SHA; public-repository runtime runners must also prove ephemeral/JIT single-job isolation",
     "cloudflare_connection_to_discovery": "requires active account-scoped token, valid account id, jadeltechrd.com zone read, Tunnel API read, R2 API read and GET-only exact target-state discovery",
-    "cloudflare_discovery_to_change_ready": "requires explicit human change approval, exact source SHA, immutable cloudflared image digest, OpenBao tunnel-token handling, least-privilege Kubernetes identity, egress-only firewall proof, scoped R2 parent credential, temporary R2 credential proof, bucket-lock plan and rollback plan",
+    "cloudflare_discovery_to_change_ready": "requires one manual execution proving exact source SHA, GitHub-hosted ephemeral runner, Tailscale federated identity, exact Kubernetes context/namespace, absence of cluster-admin and Secret-read rights, immutable cloudflared digest, OpenBao CSI contract and provider readiness, Cloudflare-only 7844 network contract and actual TCP reachability, dedicated R2 parent credential presence, temporary credential plan, bucket-lock plan and rollback plan while writes remain disabled",
+    "cloudflare_change_ready_to_creation": "requires a separate explicit human confirmation and a create-only idempotent workflow; deletes, overwrite of pre-existing nonmatching resources and first-change DNS mutation remain forbidden",
     "cloudflare_change_to_runtime_verified": "requires real target resources plus tunnel HA/failover, R2 checksum roundtrip, retention enforcement, credential rotation and OTel evidence; configuration or CI success is insufficient",
     "runtime_to_production": "requires separate safety, quality, SLO, DR and sustained-operation evidence",
     "boolean_claim_without_evidence_ref": "DENY"
@@ -43,6 +45,8 @@
     "cloudflare_write_before_change_gate",
     "cloudflare_tunnel_token_in_github",
     "r2_evidence_write_before_bucket_lock",
-    "r2_control_plane_token_reused_as_runtime_data_plane_credential"
+    "r2_control_plane_token_reused_as_runtime_data_plane_credential",
+    "cloudflare_resource_delete_in_first_change",
+    "cloudflare_existing_resource_overwrite_without_exact_contract_match"
   ]
 }

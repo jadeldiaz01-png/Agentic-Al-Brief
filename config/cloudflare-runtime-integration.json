@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "integration_id": "cloudflare-tunnel-r2-runtime",
   "default_decision": "NO_GO",
   "mode": "READ_ONLY_UNTIL_CHANGE_GATES_PASS",
@@ -11,7 +11,9 @@
     "raw_secret_logging_forbidden": true,
     "tunnel_token_in_github_forbidden": true,
     "tunnel_token_secret_manager": "openbao",
-    "r2_data_plane_temporary_credentials_required": true
+    "r2_data_plane_temporary_credentials_required": true,
+    "r2_parent_api_token_env": "R2_PARENT_API_TOKEN",
+    "r2_parent_access_key_id_env": "R2_PARENT_ACCESS_KEY_ID"
   },
   "tunnel": {
     "desired_name": "agentic-ai-brief-runtime",
@@ -24,9 +26,12 @@
     "public_inbound_ports_required": false,
     "egress": {
       "port": 7844,
-      "protocols": ["TCP", "UDP"]
+      "protocols": ["TCP", "UDP"],
+      "required_ipv4_cidrs": ["198.41.192.0/24", "198.41.200.0/24"]
     },
-    "cloudflared_candidate_version": "2026.9.0",
+    "cloudflared_selected_version": "2026.8.3",
+    "cloudflared_multiarch_index_digest": "sha256:51c9cefcb4569df44e1ad403ab1d3d8065aa8e84339bcfc6aee75502e1140339",
+    "cloudflared_image": "cloudflare/cloudflared@sha256:51c9cefcb4569df44e1ad403ab1d3d8065aa8e84339bcfc6aee75502e1140339",
     "immutable_image_digest_required_before_apply": true,
     "health_connections_minimum": 2
   },
@@ -43,6 +48,8 @@
     "encryption_at_rest_required": true,
     "tls_required": true,
     "data_plane": "s3_compatible_api_with_temporary_credentials",
+    "temporary_credential_ttl_seconds": 900,
+    "temporary_credential_permission": "object-read-write",
     "presigned_url_max_ttl_seconds": 900
   },
   "required_read_only_gates": [
@@ -65,7 +72,8 @@
     "r2_parent_data_token_scoped_to_target_bucket",
     "r2_temporary_credentials_verified",
     "r2_bucket_lock_plan_verified",
-    "rollback_plan_present"
+    "rollback_plan_present",
+    "p0_cf_change_ready_verified"
   ],
   "required_before_runtime_verified": [
     "target_tunnel_present",
