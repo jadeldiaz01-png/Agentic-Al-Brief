@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-
 CHANGE_READY = Path("config/p0-cf-change-ready.json")
 CLOUDFLARE = Path("config/cloudflare-runtime-integration.json")
 DEPLOYMENT = Path("deploy/cloudflare/cloudflared-runtime.yaml")
