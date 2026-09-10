@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0.0",
+  "integration_id": "cloudflare-tunnel-r2-runtime",
+  "default_decision": "NO_GO",
+  "mode": "READ_ONLY_UNTIL_CHANGE_GATES_PASS",
+  "zone": "jadeltechrd.com",
+  "credentials": {
+    "control_plane_token_env": "CLOUDFLARE_API_TOKEN",
+    "account_id_env": "CLOUDFLARE_ACCOUNT_ID",
+    "github_environment": "agentic-ai-brief-runtime",
+    "raw_secret_logging_forbidden": true,
+    "tunnel_token_in_github_forbidden": true,
+    "tunnel_token_secret_manager": "openbao",
+    "r2_data_plane_temporary_credentials_required": true
+  },
+  "tunnel": {
+    "desired_name": "agentic-ai-brief-runtime",
+    "configuration_source": "cloudflare",
+    "kubernetes_deployment": "separate_adjacent_deployment",
+    "replicas": 2,
+    "autoscaling": false,
+    "run_as_non_root": true,
+    "public_origin_ip_required": false,
+    "public_inbound_ports_required": false,
+    "egress": {
+      "port": 7844,
+      "protocols": ["TCP", "UDP"]
+    },
+    "cloudflared_candidate_version": "2026.9.0",
+    "immutable_image_digest_required_before_apply": true,
+    "health_connections_minimum": 2
+  },
+  "r2": {
+    "desired_bucket": "agentic-ai-brief-runtime-evidence",
+    "public_access": false,
+    "evidence_prefix": "runtime-evidence/",
+    "bucket_lock": {
+      "required": true,
+      "retention_seconds": 7776000,
+      "minimum_retention_days": 90
+    },
+    "lifecycle_delete_before_lock_expiry_forbidden": true,
+    "encryption_at_rest_required": true,
+    "tls_required": true,
+    "data_plane": "s3_compatible_api_with_temporary_credentials",
+    "presigned_url_max_ttl_seconds": 900
+  },
+  "required_read_only_gates": [
+    "cloudflare_account_token_active",
+    "cloudflare_account_id_valid",
+    "cloudflare_zone_jadeltechrd_com_read_verified",
+    "cloudflare_tunnel_api_read_verified",
+    "cloudflare_r2_api_read_verified",
+    "target_tunnel_state_known",
+    "target_r2_bucket_state_known",
+    "discovery_uses_get_only"
+  ],
+  "required_before_first_write": [
+    "human_change_approval",
+    "exact_source_sha_bound",
+    "cloudflared_image_digest_pinned",
+    "tunnel_token_stored_in_openbao",
+    "kubernetes_least_privilege_verified",
+    "egress_only_firewall_verified",
+    "r2_parent_data_token_scoped_to_target_bucket",
+    "r2_temporary_credentials_verified",
+    "r2_bucket_lock_plan_verified",
+    "rollback_plan_present"
+  ],
+  "required_before_runtime_verified": [
+    "target_tunnel_present",
+    "target_tunnel_healthy_with_minimum_replicas",
+    "target_r2_bucket_present",
+    "r2_bucket_lock_verified",
+    "r2_write_read_checksum_roundtrip_verified",
+    "r2_overwrite_delete_denied_during_lock_verified",
+    "tunnel_failover_drill_verified",
+    "credential_rotation_drill_verified",
+    "otel_cloudflare_signals_observed",
+    "evidence_refs_bound_to_exact_source_sha"
+  ],
+  "writes_enabled": false,
+  "destructive_operations_enabled": false
+}
