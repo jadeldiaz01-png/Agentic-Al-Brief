@@ -1,0 +1,57 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cloudflared-default-deny
+  namespace: agentic-ai-brief-runtime
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: cloudflared-runtime
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cloudflared-dns-egress
+  namespace: agentic-ai-brief-runtime
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: cloudflared-runtime
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cloudflared-edge-egress
+  namespace: agentic-ai-brief-runtime
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: cloudflared-runtime
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 198.41.192.0/24
+        - ipBlock:
+            cidr: 198.41.200.0/24
+      ports:
+        - protocol: TCP
+          port: 7844
+        - protocol: UDP
+          port: 7844
