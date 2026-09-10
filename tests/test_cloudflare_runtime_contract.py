@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-
 CONFIG = Path("config/cloudflare-runtime-integration.json")
 SCRIPT = Path("scripts/cloudflare_runtime_discovery.py")
 
