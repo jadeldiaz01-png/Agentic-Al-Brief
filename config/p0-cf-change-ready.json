@@ -1,12 +1,12 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "gate_id": "P0-CF-CHANGE-READY",
   "default_decision": "NO_GO",
   "target_namespace": "agentic-ai-brief-runtime",
   "source_sha_binding_required": true,
   "cloudflared": {
     "selected_release": "2026.8.3",
-    "selection_basis": "latest GitHub release observed during 2026-09-10 review; newer Docker tags require separate release adjudication",
+    "selection_basis": "official cloudflare/cloudflared latest release observed during 2026-09-10 review",
     "image": "cloudflare/cloudflared@sha256:51c9cefcb4569df44e1ad403ab1d3d8065aa8e84339bcfc6aee75502e1140339",
     "multiarch_index_digest": "sha256:51c9cefcb4569df44e1ad403ab1d3d8065aa8e84339bcfc6aee75502e1140339",
     "linux_amd64_manifest_digest": "sha256:9be48e4b4e996da851bf78f7782bfab150dd4d8889e469d004802e7d7afb63b1",
@@ -28,7 +28,9 @@
     "kubernetes_secret_sync_forbidden": true,
     "dedicated_service_account_required": true,
     "short_lived_service_account_token_required": true,
-    "static_long_lived_kubernetes_token_forbidden": true
+    "static_long_lived_kubernetes_token_forbidden": true,
+    "change_ready_proof": "schema_and_crd_only",
+    "post_create_proof": "real_secret_mount_required"
   },
   "kubernetes": {
     "service_account": "cloudflared-runtime",
@@ -47,6 +49,12 @@
       "topology_spread_required": true
     }
   },
+  "tailscale": {
+    "authentication": "github_oidc_workload_identity_federation",
+    "expected_tag": "tag:agentic-ai-brief-runtime",
+    "ephemeral_node_required": true,
+    "oauth_secret_or_authkey_forbidden": true
+  },
   "network": {
     "public_ingress_required": false,
     "default_deny_ingress": true,
@@ -55,7 +63,8 @@
     "required_cloudflare_ipv4_cidrs": ["198.41.192.0/24", "198.41.200.0/24"],
     "dns_egress_required": true,
     "host_or_edge_firewall_must_restrict_to_cloudflare_destinations": true,
-    "standard_networkpolicy_fqdn_limitation_acknowledged": true
+    "standard_networkpolicy_fqdn_limitation_acknowledged": true,
+    "connectivity_test_must_use_same_network_path_as_runtime": true
   },
   "r2": {
     "bucket": "agentic-ai-brief-runtime-evidence",
@@ -68,31 +77,42 @@
     "temporary_prefixes": ["runtime-evidence/"],
     "temporary_ttl_seconds": 900,
     "parent_access_key_must_be_dedicated_and_bucket_scoped": true,
-    "control_plane_token_as_s3_credential_forbidden": true
+    "control_plane_token_as_s3_credential_forbidden": true,
+    "temporary_credential_functional_test_stage": "POST_CREATE_VERIFY"
   },
   "required_change_ready_gates": [
     "manual_workflow_dispatch_verified",
     "exact_source_sha_verified",
     "github_hosted_ephemeral_runner_verified",
-    "tailscale_federated_identity_verified",
+    "tailscale_wif_path_verified",
+    "tailscale_expected_tag_verified",
     "kubernetes_context_verified",
     "namespace_verified",
     "cluster_admin_absent",
     "secrets_read_absent",
     "cloudflared_image_digest_exact",
-    "openbao_csi_driver_present",
-    "openbao_csi_provider_present",
-    "openbao_secret_provider_class_contract_valid",
+    "secrets_store_csi_crd_discoverable",
+    "openbao_secret_provider_class_schema_admitted",
     "dedicated_service_account_contract_valid",
     "networkpolicy_contract_valid",
-    "cloudflare_7844_tcp_reachable",
-    "cloudflare_7844_udp_policy_declared",
+    "cloudflare_7844_connectivity_verified_from_runtime_path",
     "r2_target_state_known",
     "r2_parent_credential_presence_verified_without_value_disclosure",
     "r2_temporary_credential_mint_plan_valid",
     "r2_bucket_lock_plan_valid",
     "rollback_plan_present",
     "writes_still_disabled"
+  ],
+  "post_create_required_gates": [
+    "target_tunnel_present",
+    "target_r2_bucket_present",
+    "r2_bucket_lock_verified",
+    "tunnel_token_stored_in_openbao",
+    "openbao_csi_secret_mount_verified",
+    "r2_parent_credential_functional_verified",
+    "r2_temporary_credentials_verified",
+    "cloudflared_deployment_applied_by_digest",
+    "target_tunnel_healthy_with_minimum_replicas"
   ],
   "change_ready_decision": "all required_change_ready_gates must be true in the same execution",
   "non_destructive_creation_policy": {
