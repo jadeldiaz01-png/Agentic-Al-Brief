@@ -5,6 +5,7 @@ from pathlib import Path
 
 CHANGE_READY = Path("config/p0-cf-change-ready.json")
 CLOUDFLARE = Path("config/cloudflare-runtime-integration.json")
+STATE_MACHINE = Path("config/p0-cf-state-machine.json")
 DEPLOYMENT = Path("deploy/cloudflare/cloudflared-runtime.yaml")
 NETWORK_POLICY = Path("deploy/cloudflare/cloudflared-networkpolicy.yaml")
 PREFLIGHT = Path("scripts/p0_cf_change_ready_preflight.sh")
@@ -49,6 +50,8 @@ def test_cloudflared_pod_security_and_availability() -> None:
         "type: RuntimeDefault",
         "minAvailable: 1",
         "topologySpreadConstraints:",
+        "whenUnsatisfiable: DoNotSchedule",
+        "enableServiceLinks: false",
         "provider: openbao",
         "driver: secrets-store.csi.k8s.io",
     ):
@@ -76,6 +79,30 @@ def test_r2_contract_uses_short_lived_scoped_credentials_and_lock() -> None:
     assert r2["temporary_ttl_seconds"] <= 900
     assert r2["minimum_lock_seconds"] >= 7_776_000
     assert r2["control_plane_token_as_s3_credential_forbidden"] is True
+    assert r2["temporary_credential_functional_test_stage"] == "POST_CREATE_VERIFY"
+
+
+def test_change_ready_has_no_circular_post_create_requirements() -> None:
+    cf = json.loads(CLOUDFLARE.read_text(encoding="utf-8"))
+    before = set(cf["required_for_change_ready"])
+    after = set(cf["required_immediately_after_create_only"])
+    assert "tunnel_token_stored_in_openbao" not in before
+    assert "r2_temporary_credentials_verified" not in before
+    assert "openbao_csi_secret_mount_verified" not in before
+    assert "cloudflare_edge_connectivity_verified_from_execution_environment" in before
+    assert "tunnel_token_stored_in_openbao" in after
+    assert "r2_temporary_credentials_verified" in after
+    assert "openbao_csi_secret_mount_verified" in after
+
+
+def test_preflight_truthfully_distinguishes_schema_from_runtime_proof() -> None:
+    preflight = PREFLIGHT.read_text(encoding="utf-8")
+    assert "OPENBAO_SECRET_PROVIDER_CLASS_SCHEMA_ADMITTED=YES" in preflight
+    assert "OPENBAO_CSI_PROVIDER_PRESENT=YES" not in preflight
+    assert "CLOUDFLARE_7844_RUNNER_PRECHECK_VERIFIED=YES" in preflight
+    assert "CLOUDFLARE_7844_CONNECTIVITY_VERIFIED_FROM_RUNTIME_PATH=YES" not in preflight
+    assert "TAILSCALE_WIF_PATH_VERIFIED=YES" in preflight
+    assert "TAILSCALE_EXPECTED_TAG_VERIFIED=YES" in preflight
 
 
 def test_preflight_and_workflow_cannot_apply_cloudflare_changes() -> None:
@@ -86,15 +113,33 @@ def test_preflight_and_workflow_cannot_apply_cloudflare_changes() -> None:
     assert "pull_request:" not in workflow
     assert "push:" not in workflow
     assert "ref: ${{ inputs.expected_sha }}" in workflow
+    assert "id-token: write" in workflow
+    assert "oauth-secret:" not in workflow
+    assert "authkey:" not in workflow
     for forbidden in ("curl -X POST", "curl -X PUT", "curl -X PATCH", "curl -X DELETE"):
         assert forbidden not in preflight
         assert forbidden not in workflow
 
 
-def test_production_manifest_requires_change_ready() -> None:
+def test_production_manifest_requires_post_create_stage() -> None:
     prod = json.loads(Path("config/production-readiness.json").read_text(encoding="utf-8"))
     assert "CHANGE_READY" in prod["evidence_levels"]
+    assert "CREATE_ONLY_APPLIED" in prod["evidence_levels"]
+    assert "POST_CREATE_VERIFIED" in prod["evidence_levels"]
     assert "p0_cf_change_ready_verified" in prod["required_for_production"]["runtime"]
+    assert "cloudflare_post_create_verified" in prod["required_for_production"]["runtime"]
+
+
+def test_state_machine_prevents_skipping_runtime_evidence() -> None:
+    cfg = json.loads(STATE_MACHINE.read_text(encoding="utf-8"))
+    states = cfg["states"]
+    assert states.index("CHANGE_READY") < states.index("CREATE_ONLY_APPLIED")
+    assert states.index("CREATE_ONLY_APPLIED") < states.index("POST_CREATE_VERIFIED")
+    assert states.index("POST_CREATE_VERIFIED") < states.index("RUNTIME_VERIFIED")
+    perms = cfg["stage_permissions"]
+    assert perms["CHANGE_READY"]["cloudflare_mutations"] is False
+    assert perms["CREATE_ONLY_APPLIED"]["delete"] is False
+    assert perms["CREATE_ONLY_APPLIED"]["dns_mutation"] is False
 
 
 def test_cloudflare_manifest_and_change_ready_contract_match() -> None:
