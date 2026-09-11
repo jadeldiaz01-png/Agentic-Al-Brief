@@ -10,7 +10,7 @@ SCRIPT = Path("scripts/cloudflare_runtime_discovery.py")
 def test_cloudflare_runtime_contract_is_fail_closed() -> None:
     cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
     assert cfg["default_decision"] == "NO_GO"
-    assert cfg["mode"] == "READ_ONLY_UNTIL_CHANGE_GATES_PASS"
+    assert cfg["mode"] == "STATE_MACHINE_FAIL_CLOSED"
     assert cfg["writes_enabled"] is False
     assert cfg["destructive_operations_enabled"] is False
     assert cfg["credentials"]["raw_secret_logging_forbidden"] is True
@@ -49,15 +49,23 @@ def test_discovery_code_has_no_cloudflare_write_http_methods() -> None:
         assert forbidden not in text
 
 
-def test_runtime_promotion_requires_real_drills() -> None:
+def test_post_create_and_runtime_promotion_require_real_evidence() -> None:
     cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
-    required = set(cfg["required_before_runtime_verified"])
+    post_create = set(cfg["required_immediately_after_create_only"])
+    runtime = set(cfg["required_before_runtime_verified"])
     assert {
+        "target_tunnel_present",
         "target_tunnel_healthy_with_minimum_replicas",
+        "target_r2_bucket_present",
         "r2_bucket_lock_verified",
+        "tunnel_token_stored_in_openbao",
+        "openbao_csi_secret_mount_verified",
+        "r2_temporary_credentials_verified",
+    }.issubset(post_create)
+    assert {
         "r2_write_read_checksum_roundtrip_verified",
         "r2_overwrite_delete_denied_during_lock_verified",
         "tunnel_failover_drill_verified",
         "credential_rotation_drill_verified",
         "evidence_refs_bound_to_exact_source_sha",
-    }.issubset(required)
+    }.issubset(runtime)
