@@ -97,12 +97,12 @@ def test_change_ready_has_no_circular_post_create_requirements() -> None:
 
 def test_preflight_truthfully_distinguishes_schema_from_runtime_proof() -> None:
     preflight = PREFLIGHT.read_text(encoding="utf-8")
-    assert "OPENBAO_SECRET_PROVIDER_CLASS_SCHEMA_ADMITTED=YES" in preflight
+    assert "yes_gate OPENBAO_SECRET_PROVIDER_CLASS_SCHEMA_ADMITTED" in preflight
     assert "OPENBAO_CSI_PROVIDER_PRESENT=YES" not in preflight
-    assert "CLOUDFLARE_7844_RUNNER_PRECHECK_VERIFIED=YES" in preflight
+    assert "yes_gate CLOUDFLARE_7844_RUNNER_PRECHECK_VERIFIED" in preflight
     assert "CLOUDFLARE_7844_CONNECTIVITY_VERIFIED_FROM_RUNTIME_PATH=YES" not in preflight
-    assert "TAILSCALE_WIF_PATH_VERIFIED=YES" in preflight
-    assert "TAILSCALE_EXPECTED_TAG_VERIFIED=YES" in preflight
+    assert "yes_gate TAILSCALE_WIF_PATH_VERIFIED" in preflight
+    assert "yes_gate TAILSCALE_EXPECTED_TAG_VERIFIED" in preflight
 
 
 def test_preflight_and_workflow_cannot_apply_cloudflare_changes() -> None:
