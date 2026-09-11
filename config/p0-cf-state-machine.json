@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0.0",
+  "state_machine_id": "P0-CF-RUNTIME-INTEGRATION",
+  "default_state": "NO_GO",
+  "states": [
+    "NO_GO",
+    "CONNECTION_VERIFIED",
+    "DISCOVERY_VERIFIED",
+    "CHANGE_READY",
+    "CREATE_ONLY_APPLIED",
+    "POST_CREATE_VERIFIED",
+    "RUNTIME_VERIFIED",
+    "PRODUCTION_VERIFIED"
+  ],
+  "transitions": {
+    "NO_GO->CONNECTION_VERIFIED": "active Cloudflare account token plus account/zone/Tunnel/R2 read gates",
+    "CONNECTION_VERIFIED->DISCOVERY_VERIFIED": "GET-only target Tunnel and R2 state known",
+    "DISCOVERY_VERIFIED->CHANGE_READY": "manual exact-SHA P0-CF gate with WIF tag, least privilege, immutable image, CSI schema, egress policy, R2 plan, rollback and writes disabled",
+    "CHANGE_READY->CREATE_ONLY_APPLIED": "separate explicit human confirmation CREATE_CLOUDFLARE_RUNTIME_RESOURCES and create-only/idempotent workflow",
+    "CREATE_ONLY_APPLIED->POST_CREATE_VERIFIED": "real Tunnel/R2 resources, Bucket Lock, Tunnel token in OpenBao, real CSI mount, runtime-path 7844 connectivity, temporary R2 credentials and healthy cloudflared replicas",
+    "POST_CREATE_VERIFIED->RUNTIME_VERIFIED": "checksum roundtrip, retention denial tests, tunnel failover, credential rotation, OTel evidence and exact-SHA evidence binding",
+    "RUNTIME_VERIFIED->PRODUCTION_VERIFIED": "full project safety, quality, SLO, DR, sustained-operation and governance gates"
+  },
+  "stage_permissions": {
+    "CHANGE_READY": {
+      "cloudflare_mutations": false,
+      "kubernetes_persistent_mutations": false,
+      "secret_value_logging": false
+    },
+    "CREATE_ONLY_APPLIED": {
+      "cloudflare_create_missing_tunnel": true,
+      "cloudflare_create_missing_r2_bucket": true,
+      "cloudflare_set_bucket_lock": true,
+      "dns_mutation": false,
+      "delete": false,
+      "overwrite_nonmatching_existing_resource": false
+    },
+    "POST_CREATE_VERIFIED": {
+      "r2_test_object_write_under_locked_prefix": true,
+      "destructive_resource_delete": false,
+      "production_promotion": false
+    }
+  },
+  "invariants": [
+    "no state may be inferred from configuration-only evidence",
+    "every runtime transition must be bound to exact source SHA and execution id",
+    "a later state cannot be entered when any required prior-stage gate is missing",
+    "Tunnel token must never be stored in GitHub secrets",
+    "Cloudflare control-plane token must never be reused as R2 S3 data-plane credentials",
+    "Bucket Lock must be verified before certified evidence object writes",
+    "DNS mutation and resource deletion are forbidden in the first change"
+  ]
+}
