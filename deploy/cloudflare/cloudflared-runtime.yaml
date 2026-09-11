@@ -25,6 +25,8 @@ metadata:
     app.kubernetes.io/name: cloudflared-runtime
 spec:
   replicas: 2
+  minReadySeconds: 10
+  revisionHistoryLimit: 3
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -40,6 +42,7 @@ spec:
     spec:
       serviceAccountName: cloudflared-runtime
       automountServiceAccountToken: false
+      enableServiceLinks: false
       terminationGracePeriodSeconds: 30
       securityContext:
         runAsNonRoot: true
@@ -50,7 +53,7 @@ spec:
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: ScheduleAnyway
+          whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
               app.kubernetes.io/name: cloudflared-runtime
