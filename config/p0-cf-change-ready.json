@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "gate_id": "P0-CF-CHANGE-READY",
   "default_decision": "NO_GO",
   "target_namespace": "agentic-ai-brief-runtime",
@@ -64,7 +64,7 @@
     "dns_egress_required": true,
     "host_or_edge_firewall_must_restrict_to_cloudflare_destinations": true,
     "standard_networkpolicy_fqdn_limitation_acknowledged": true,
-    "connectivity_test_must_use_same_network_path_as_runtime": true
+    "runtime_connectivity_proof_stage": "POST_CREATE_VERIFY"
   },
   "r2": {
     "bucket": "agentic-ai-brief-runtime-evidence",
@@ -95,7 +95,7 @@
     "openbao_secret_provider_class_schema_admitted",
     "dedicated_service_account_contract_valid",
     "networkpolicy_contract_valid",
-    "cloudflare_7844_connectivity_verified_from_runtime_path",
+    "cloudflare_7844_runner_precheck_verified",
     "r2_target_state_known",
     "r2_parent_credential_presence_verified_without_value_disclosure",
     "r2_temporary_credential_mint_plan_valid",
@@ -109,6 +109,7 @@
     "r2_bucket_lock_verified",
     "tunnel_token_stored_in_openbao",
     "openbao_csi_secret_mount_verified",
+    "cloudflare_7844_connectivity_verified_from_runtime_path",
     "r2_parent_credential_functional_verified",
     "r2_temporary_credentials_verified",
     "cloudflared_deployment_applied_by_digest",
