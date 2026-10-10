@@ -6,8 +6,9 @@ Missing credentials and unapproved overrides fail closed.
 from __future__ import annotations
 
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Literal, Mapping
+from typing import Literal
 
 from agents import ModelSettings, OpenAIChatCompletionsModel, set_tracing_disabled
 from openai import AsyncOpenAI
