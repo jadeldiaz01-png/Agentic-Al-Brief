@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from agentic_ai_brief import nemotron_provider as provider
 
 
