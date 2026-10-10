@@ -77,6 +77,42 @@ for field in ("tool_name", "source_trust"):
     for value in (None, True, 1, [], {}):
         CASE_INPUTS.append((f"bad_{field}_{type(value).__name__}", {field: value}))
 
+# A valid, read-only intent with extra fields must fail closed in BOTH engines.
+# The unknown field must not be silently ignored by Rego while Python denies it.
+for field, value in (
+    ("unexpected_permission", "admin"),
+    ("human_approval_verified_", True),
+    ("external_write_", False),
+    ("source_trust_verified", True),
+    ("admin", True),
+    ("__proto__", {"isAdmin": True}),
+    ("", "not_an_allowed_key"),
+    ("tool.name", "shadow"),
+    ("human_approval", True),
+    ("policy_override", {"allow": True}),
+):
+    CASE_INPUTS.append((f"extra_field_{field!r}", {field: value}))
+
+# Extra keys also cannot be tolerated if the intent claims human approval,
+# even while its real capabilities remain strictly read-only.
+CASE_INPUTS.extend([
+    (
+        "approved_read_only_with_unknown_field",
+        {
+            "requires_human_approval": True,
+            "human_approval_verified": True,
+            "unexpected_permission": "admin",
+        },
+    ),
+    (
+        "optional_approval_with_unknown_field",
+        {
+            "__omit_human_approval_verified__": True,
+            "unexpected_permission": "admin",
+        },
+    ),
+])
+
 
 @pytest.mark.parametrize("name,changes", CASE_INPUTS, ids=[x[0] for x in CASE_INPUTS])
 def test_real_opa_and_python_policy_are_equivalent(name: str, changes: dict[str, object]) -> None:

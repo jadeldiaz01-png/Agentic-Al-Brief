@@ -7,6 +7,21 @@ package agentic_ai_brief.tool_authorization
 default allow := false
 
 allow if {
+  # Match Python ToolIntent's constructor: reject any unknown JSON property.
+  # Optional human_approval_verified defaults to false in both engines.
+  is_object(input)
+  allowed_keys := {
+    "tool_name",
+    "read_only",
+    "external_write",
+    "financial",
+    "identity_or_legal",
+    "requires_human_approval",
+    "source_trust",
+    "human_approval_verified",
+  }
+  count(object.keys(input) - allowed_keys) == 0
+
   # All permission fields are typed strictly before applying any allow rule.
   # The verified-approval field is optional (Python dataclass defaults False).
   is_string(input.tool_name)
