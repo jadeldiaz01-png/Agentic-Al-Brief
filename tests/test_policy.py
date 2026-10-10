@@ -2,16 +2,16 @@ from agentic_ai_brief.policy import ToolIntent, evaluate_tool_intent
 
 
 def intent(**overrides):
-    params = dict(
-        tool_name="web_search",
-        read_only=True,
-        external_write=False,
-        financial=False,
-        identity_or_legal=False,
-        requires_human_approval=False,
-        source_trust="verified",
-        human_approval_verified=False,
-    )
+    params = {
+        "tool_name": "web_search",
+        "read_only": True,
+        "external_write": False,
+        "financial": False,
+        "identity_or_legal": False,
+        "requires_human_approval": False,
+        "source_trust": "verified",
+        "human_approval_verified": False,
+    }
     params.update(overrides)
     return ToolIntent(**params)
 
