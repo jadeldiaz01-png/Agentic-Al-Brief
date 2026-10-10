@@ -49,14 +49,30 @@ def test_non_authorized_provider_denied(isolated):
     assert isolated == []
 
 
-def test_private_constructor_contract_is_offline_only(isolated):
-    route = provider._prepare_nvidia_model({
-        "NVIDIA_API_KEY": "synthetic-test-value"
-    })
-    assert route.model.kwargs["model"] == provider.NEMOTRON_MODEL_ID
-    assert route.model.kwargs["openai_client"].kwargs["base_url"] == provider.NVIDIA_BASE_URL
-    assert route.model_settings.max_tokens == 4096
-    assert isolated == [True]
+def test_private_client_constructor_is_locked_even_with_valid_credentials(isolated):
+    with pytest.raises(provider.ProviderConfigurationError, match="NVIDIA_ACTIVATION_BLOCKED"):
+        provider._prepare_nvidia_model({
+            "NVIDIA_API_KEY": "synthetic-test-value",
+            "AGIA_NVIDIA_MODEL": provider.NEMOTRON_MODEL_ID,
+            "AGIA_NVIDIA_BASE_URL": provider.NVIDIA_BASE_URL,
+            "AGIA_PRIMARY_LLM_PROVIDER": "nvidia",
+        })
+    assert isolated == []
+
+
+@pytest.mark.parametrize("override", [
+    {},
+    {"AGIA_NVIDIA_APPROVED": "true"},
+    {"PRODUCTION_AUTHORIZED": "true"},
+    {"AGIA_NVIDIA_RUNTIME_CERTIFIED": "true"},
+])
+def test_environment_flags_cannot_activate_nvidia_client(isolated, override):
+    env = {"NVIDIA_API_KEY": "synthetic-test-value", "AGIA_PRIMARY_LLM_PROVIDER": "nvidia", **override}
+    with pytest.raises(provider.ProviderConfigurationError, match="NVIDIA_ACTIVATION_BLOCKED"):
+        provider.select_primary_model(env)
+    with pytest.raises(provider.ProviderConfigurationError, match="NVIDIA_ACTIVATION_BLOCKED"):
+        provider._prepare_nvidia_model(env)
+    assert isolated == []
 
 
 @pytest.mark.parametrize("env", [
@@ -66,8 +82,8 @@ def test_private_constructor_contract_is_offline_only(isolated):
     {"NVIDIA_API_KEY": "synthetic", "AGIA_NVIDIA_MODEL": "not-allowed"},
     {"NVIDIA_API_KEY": "synthetic", "AGIA_NVIDIA_BASE_URL": "http://localhost"},
 ])
-def test_private_constructor_checks_credentials_and_allowlist(isolated, env):
-    with pytest.raises(provider.ProviderConfigurationError):
+def test_private_constructor_is_closed_for_all_unverified_configs(isolated, env):
+    with pytest.raises(provider.ProviderConfigurationError, match="NVIDIA_ACTIVATION_BLOCKED"):
         provider._prepare_nvidia_model(env)
     assert isolated == []
 

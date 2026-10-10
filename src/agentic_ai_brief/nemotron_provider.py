@@ -57,7 +57,14 @@ def nemotron_settings(role: NemotronRole = "research") -> ModelSettings:
 
 
 def _prepare_nvidia_model(environ: Mapping[str, str]) -> PrimaryModelSelection:
-    """Construct only for offline contract testing; not an activation entrypoint."""
+    """Enforce source-controlled activation at the client-construction boundary.
+
+    This entrypoint is deliberately locked even for a correct NVIDIA key,
+    endpoint and environment selector. A future certified revision must
+    implement a separate, externally verified authorization boundary.
+    """
+    if NEMOTRON_ACTIVATION_LOCKED:
+        raise ProviderConfigurationError("NVIDIA_ACTIVATION_BLOCKED_PENDING_CERTIFICATION")
     if environ.get("AGIA_NVIDIA_MODEL", NEMOTRON_MODEL_ID) != NEMOTRON_MODEL_ID:
         raise ProviderConfigurationError("Unapproved NVIDIA model")
     if environ.get("AGIA_NVIDIA_BASE_URL", NVIDIA_BASE_URL) != NVIDIA_BASE_URL:

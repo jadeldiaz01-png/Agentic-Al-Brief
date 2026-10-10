@@ -28,6 +28,26 @@ def evaluate_tool_intent(intent: ToolIntent) -> PolicyDecision:
     Write authority stays unavailable until an external verified approval
     adapter and a distinct human gate have been implemented and tested.
     """
+    # Runtime data can come from JSON, MCP or external tooling. Python type
+    # hints are not runtime validators: "false", 0, [], and null must never
+    # acquire boolean authority through truthiness.
+    if not isinstance(intent, ToolIntent):
+        return PolicyDecision(allowed=False, reasons=("invalid_tool_intent_schema",))
+    if type(intent.tool_name) is not str or not intent.tool_name:
+        return PolicyDecision(allowed=False, reasons=("invalid_tool_intent_schema",))
+    if type(intent.source_trust) is not str:
+        return PolicyDecision(allowed=False, reasons=("invalid_tool_intent_schema",))
+    for key in (
+        "read_only",
+        "external_write",
+        "financial",
+        "identity_or_legal",
+        "requires_human_approval",
+        "human_approval_verified",
+    ):
+        if type(getattr(intent, key)) is not bool:
+            return PolicyDecision(allowed=False, reasons=("invalid_tool_intent_schema",))
+
     reasons: list[str] = []
     if intent.source_trust != "verified":
         reasons.append("untrusted_tool_source")
