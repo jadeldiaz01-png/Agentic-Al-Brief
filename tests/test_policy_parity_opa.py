@@ -67,7 +67,7 @@ for field in (
     "requires_human_approval", "human_approval_verified",
 ):
     for value in ("false", "true", 0, 1, None, [], {}):
-        CASE_INPUTS.append((f"bad_{field}_{type(value).__name__}_{str(value)}", {field: value}))
+        CASE_INPUTS.append((f"bad_{field}_{type(value).__name__}_{value!s}", {field: value}))
 for field in (
     "tool_name", "read_only", "external_write", "financial",
     "identity_or_legal", "requires_human_approval", "source_trust",
