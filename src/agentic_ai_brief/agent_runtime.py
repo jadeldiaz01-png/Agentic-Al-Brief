@@ -1,3 +1,5 @@
+from typing import Literal
+
 from agents import Agent, ModelSettings
 from openai.types.shared import Reasoning
 
@@ -10,10 +12,10 @@ BASE_MODEL = LEGACY_MODEL_ID
 def build_agents() -> dict[str, Agent]:
     selection = select_primary_model()
 
-    def agent_settings(effort: str) -> ModelSettings:
+    def agent_settings(effort: Literal["low", "medium"]) -> ModelSettings:
         if selection.model_settings is not None:
             return selection.model_settings
-        return ModelSettings(reasoning=Reasoning(effort=effort))  # type: ignore[arg-type]
+        return ModelSettings(reasoning=Reasoning(effort=effort))
 
     research = Agent(
         name="ResearchAgent",
