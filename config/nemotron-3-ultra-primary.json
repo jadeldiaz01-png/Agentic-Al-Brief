@@ -8,15 +8,13 @@
   "desired_primary_model": "nvidia/nemotron-3-ultra-550b-a55b",
   "provider": "nvidia",
   "api_base_url": "https://integrate.api.nvidia.com/v1",
-  "activation_status": "PREPARE_ONLY_DISABLED",
+  "activation_status": "PREPARE_ONLY_CODE_LOCKED",
   "runtime_provider_default": "openai",
-  "activation_switch": "AGIA_PRIMARY_LLM_PROVIDER=nvidia",
+  "activation_switch": "UNAVAILABLE_IN_THIS_REVISION",
   "secret_name": "NVIDIA_API_KEY",
   "secret_source": "protected runtime/OpenBao (never repository, prompts or logs)",
   "auto_fallback": false,
   "max_tokens_per_call": 4096,
-  "reasoning_budget": 1024,
-  "reasoning_effort": "medium",
   "retries_in_client": 0,
   "network_egress_allowlist": [
     "integrate.api.nvidia.com:443"
@@ -33,5 +31,14 @@
     "human_activation_approved_and_deployment_separately_approved"
   ],
   "production_authorized": false,
-  "max_autonomous_capital_usd": 0
+  "max_autonomous_capital_usd": 0,
+  "requested_provider_selector": "AGIA_PRIMARY_LLM_PROVIDER=nvidia (will fail closed)",
+  "reasoning_mode_by_agent": {
+    "supervisor": "disabled_for_tool_compatibility_candidate",
+    "research": "thinking_medium_effort",
+    "verifier": "thinking_medium_effort",
+    "writer": "disabled_for_json_compatibility_candidate"
+  },
+  "structured_output_proof": "OFFLINE_NEGATIVE_TESTS_ONLY",
+  "tool_calling_proof": "UNVERIFIED_REQUIRES_AUTHENTICATED_STAGING"
 }

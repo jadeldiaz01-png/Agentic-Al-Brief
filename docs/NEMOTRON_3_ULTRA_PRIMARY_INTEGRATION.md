@@ -13,12 +13,11 @@ requires a separate controlled update.
 - Transport: AsyncOpenAI + OpenAIChatCompletionsModel from OpenAI Agents SDK.
 - Agent topology remains supervisor, research, verifier, writer.
 - DEFAULT selection is the existing OpenAI model; no NVIDIA inference is enabled.
-- Operator-controlled opt-in: AGIA_PRIMARY_LLM_PROVIDER=nvidia.
+- Provider selection is CODE-LOCKED in this revision. The environment selector alone cannot authorize NVIDIA; a separate reviewed promotion commit and runtime evidence are required.
 - Protected runtime-only key: NVIDIA_API_KEY; do not paste its value into chat,
   GitHub, workflows, logs, browser clients, documentation or prompts.
 - No automatic fallback when the requested NVIDIA route is unhealthy.
-- Initial max_tokens 4096 and reasoning_budget 1024 are proposed limits, not
-  measured safe operating envelopes.
+- Candidate max_tokens 4096; NVIDIA chat_template_kwargs.enable_thinking and medium_effort for research/verification; thinking disabled for writer and supervisor pending actual JSON/tool-calling certification. These are not measured safe operating envelopes.
 
 ## Separate human and evidence gates
 
@@ -41,10 +40,27 @@ NVIDIA prompts, replies and tool payloads may include customer data.
 The runtime must enforce consent, minimization, retention policy, PII redaction
 and provider privacy assessment before external transmission.
 Never use an LLM reply or MCP tool output to grant privileges.
-Keep AGIA_PRIMARY_LLM_PROVIDER unset for this PR.
+Keep AGIA_PRIMARY_LLM_PROVIDER unset for this PR. No presence-only workflow or secret value authorizes inferencing.
 
 This PR must not add, change or rotate secrets; start a real inference;
 configure network egress; run workflow_dispatch; deploy; merge automatically;
 or enable trading and autonomous financial operations.
 
 Official reference: https://build.nvidia.com/nvidia/nemotron-3-ultra-550b-a55b
+
+## P1 independent review addendum
+
+- `NEMOTRON_ACTIVATION_LOCKED = True` prevents environment-only activation.
+  Removing this source lock requires a separate human-approved revision, exact
+  deployed SHA verification and actual provider/tool/JSON safety evidence.
+- NVIDIA's published examples use `chat_template_kwargs` for thinking and
+  `medium_effort`; the previous arbitrary `reasoning_budget` and
+  `reasoning_effort` request fields are removed.
+- Agent SDK strict `BriefResult` validation is exercised with malformed
+  responses in offline tests. Passing these fixtures is NOT an authenticated
+  test of NVIDIA's JSON schema feature or tool-calling behavior.
+- Python and Rego policies now both deny **all external writes**, even if a
+  model/tool supplies `requires_human_approval=true` and
+  `human_approval_verified=true`. A trusted approval receipt verified by an
+  external authority does not yet exist; no write allowance is introduced.
+- No model, workflow, runtime, secret or GitHub permissions are activated.
