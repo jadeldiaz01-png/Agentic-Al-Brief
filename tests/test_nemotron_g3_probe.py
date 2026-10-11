@@ -86,6 +86,9 @@ def test_good_fake_response_emits_only_sanitized_usage():
 
 def test_positive_spend_blocks_client_even_in_simulated_unlocked_path(monkeypatch):
     monkeypatch.setattr(g3, "G3_AUTHENTICATED_PROBE_LOCKED", False)
+    # Only synthetic, networkless unit tests may bypass the additional locks.
+    monkeypatch.setattr(g3, "G3_BILLING_CERTIFICATION_LOCKED", False)
+    monkeypatch.setattr(g3, "G3_EXECUTION_APPROVAL_LOCKED", False)
     monkeypatch.setattr(g3, "OpenAI", lambda **kwargs: pytest.fail("Client must not be called"))
     price = g3.G3PricingQuote(Decimal(1), Decimal(1), "SYNTHETIC")
     with pytest.raises(g3.G3ProbeDenied, match="G3_COST_NOT_AUTHORIZED"):
@@ -106,6 +109,9 @@ def test_single_synthetic_call_no_retries_and_no_secret_in_evidence(monkeypatch)
         def __exit__(self, exc_type, exc, tb):
             return False
     monkeypatch.setattr(g3, "G3_AUTHENTICATED_PROBE_LOCKED", False)
+    # Only synthetic, networkless unit tests may bypass the additional locks.
+    monkeypatch.setattr(g3, "G3_BILLING_CERTIFICATION_LOCKED", False)
+    monkeypatch.setattr(g3, "G3_EXECUTION_APPROVAL_LOCKED", False)
     monkeypatch.setattr(g3, "OpenAI", FakeClient)
     data = g3.run_authenticated_probe(credential="synthetic-key", quote=fixture_quote())
     assert data["status"] == "PASS" and len(calls) == len(created) == 1
@@ -126,6 +132,9 @@ def test_provider_errors_hide_exception_payload(monkeypatch):
         def __exit__(self, exc_type, exc, tb):
             return False
     monkeypatch.setattr(g3, "G3_AUTHENTICATED_PROBE_LOCKED", False)
+    # Only synthetic, networkless unit tests may bypass the additional locks.
+    monkeypatch.setattr(g3, "G3_BILLING_CERTIFICATION_LOCKED", False)
+    monkeypatch.setattr(g3, "G3_EXECUTION_APPROVAL_LOCKED", False)
     monkeypatch.setattr(g3, "OpenAI", FakeBadClient)
     with pytest.raises(g3.G3ProbeDenied) as denied:
         g3.run_authenticated_probe(credential="synthetic-key", quote=fixture_quote())
@@ -144,3 +153,46 @@ def test_g3_manifest_is_not_live():
     assert data["max_quote_input_tokens"] == g3.G3_QUOTED_INPUT_TOKENS
     assert data["max_autonomous_spend_usd"] == "0"
     assert data["fallback_to_openai"] is False
+
+
+@pytest.mark.parametrize("unlock_probe,unlock_billing,unlock_approval,expected", [
+    (False, False, False, "G3_SOURCE_LOCKED"),
+    (True, False, False, "G3_BILLING_NOT_CERTIFIED"),
+    (True, True, False, "G3_EXECUTION_NOT_AUTHORIZED"),
+])
+def test_partial_unlocks_never_create_provider_client(
+    monkeypatch, unlock_probe, unlock_billing, unlock_approval, expected,
+):
+    """A free-price claim, credential, or partial source unlock is insufficient."""
+    monkeypatch.setattr(g3, "G3_AUTHENTICATED_PROBE_LOCKED", not unlock_probe)
+    monkeypatch.setattr(g3, "G3_BILLING_CERTIFICATION_LOCKED", not unlock_billing)
+    monkeypatch.setattr(g3, "G3_EXECUTION_APPROVAL_LOCKED", not unlock_approval)
+    monkeypatch.setattr(g3, "OpenAI", lambda **kwargs: pytest.fail("SDK client constructed"))
+    forged_zero_quote = g3.G3PricingQuote(Decimal(0), Decimal(0), "UNVERIFIED_FREE_TIER")
+    with pytest.raises(g3.G3ProbeDenied, match=expected):
+        g3.run_authenticated_probe(credential="synthetic-test-key", quote=forged_zero_quote)
+
+
+def test_account_billing_guards_are_source_locked_with_no_env_override(monkeypatch):
+    monkeypatch.setenv("NVIDIA_BILLING_CERTIFIED", "true")
+    monkeypatch.setenv("G3_RUN_APPROVED", "true")
+    monkeypatch.setenv("PRODUCTION_AUTHORIZED", "true")
+    monkeypatch.setattr(g3, "G3_AUTHENTICATED_PROBE_LOCKED", False)
+    monkeypatch.setattr(g3, "OpenAI", lambda **kwargs: pytest.fail("SDK client constructed"))
+    with pytest.raises(g3.G3ProbeDenied, match="G3_BILLING_NOT_CERTIFIED"):
+        g3.run_authenticated_probe(credential="synthetic-test-key", quote=fixture_quote())
+
+
+def test_billing_manifest_requires_account_certification_and_zero_spend():
+    data = json.loads(Path("config/nvidia-g3-inference-probe.json").read_text())
+    assert data["public_free_prototype_endpoint_advertised"] is True
+    assert data["account_entitlement_verified"] is False
+    assert data["account_quotas_verified"] is False
+    assert data["external_zero_charge_enforcement_verified"] is False
+    assert data["production_terms_certified"] is False
+    assert data["billing_certification_source_locked"] is True
+    assert data["execution_approval_source_locked"] is True
+    assert data["g3_source_locked"] is True
+    assert g3.G3_BILLING_CERTIFICATION_LOCKED is True
+    assert g3.G3_EXECUTION_APPROVAL_LOCKED is True
+    assert data["max_autonomous_spend_usd"] == "0"

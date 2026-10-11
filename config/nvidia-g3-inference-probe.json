@@ -19,5 +19,26 @@
   "protected_environment_for_future": "nvidia-connection-check",
   "human_reviewer_for_future": "flotaopd-del",
   "production_authorized": false,
-  "next_gate": "Independent code review of this exact HEAD, separate merge, certified billing, independent source unlock, separately approved one live call"
+  "next_gate": "G3 account-specific entitlement and billing evidence plus independent review; no unlock or live inference",
+  "public_free_prototype_endpoint_advertised": true,
+  "public_endpoint_evidence_url": "https://build.nvidia.com/nvidia/nemotron-3-ultra-550b-a55b",
+  "developer_program_purpose": "PROTOTYPE_RESEARCH_TESTING_ONLY",
+  "license_evidence_url": "https://docs.api.nvidia.com/nim/docs/product",
+  "account_entitlement_verified": false,
+  "account_quotas_verified": false,
+  "external_zero_charge_enforcement_verified": false,
+  "production_terms_certified": false,
+  "billing_certification_source_locked": true,
+  "execution_approval_source_locked": true,
+  "verified_account_tariff_usd_per_million": null,
+  "verified_account_balance": null,
+  "human_gates_required": [
+    "account_entitlement_and_subscription_verified_without_secret_values",
+    "billing_exposure_and_noncommercial_prototype_terms_certified",
+    "independent_exact_SHA_review_of_source_locked_billing_changes",
+    "separately_authorized_merge",
+    "separately_reviewed_source_unlock_preserving_runtime_lock",
+    "independent_exact_SHA_environment_reviewer",
+    "separate_one_authenticated_call_authorization"
+  ]
 }
