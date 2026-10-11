@@ -10,6 +10,9 @@ from openai import OpenAI
 from .nemotron_provider import NEMOTRON_MODEL_ID, NVIDIA_BASE_URL
 
 G3_AUTHENTICATED_PROBE_LOCKED = True
+# Additional source-controlled gates; never infer approval from API-key presence.
+G3_BILLING_CERTIFICATION_LOCKED = True
+G3_EXECUTION_APPROVAL_LOCKED = True
 G3_MAX_CALLS = 1
 G3_QUOTED_INPUT_TOKENS = 128  # Quote only: NOT a tokenizer-enforced maximum.
 G3_MAX_OUTPUT_TOKENS = 64
@@ -103,6 +106,12 @@ def run_authenticated_probe(*, credential: str, quote: G3PricingQuote) -> dict[s
     """Must never run live on this revision, regardless of env or key presence."""
     if G3_AUTHENTICATED_PROBE_LOCKED:
         raise G3ProbeDenied("G3_SOURCE_LOCKED")
+    if G3_BILLING_CERTIFICATION_LOCKED:
+        raise G3ProbeDenied("G3_BILLING_NOT_CERTIFIED")
+    if G3_EXECUTION_APPROVAL_LOCKED:
+        raise G3ProbeDenied("G3_EXECUTION_NOT_AUTHORIZED")
+    # Even after independent promotion, a caller-supplied zero-price quote
+    # alone is not billing proof: certified account-level controls are required.
     if estimate_quoted_max_usd(quote) > G3_MAX_AUTONOMOUS_SPEND_USD:
         raise G3ProbeDenied("G3_COST_NOT_AUTHORIZED")
     if not isinstance(credential, str) or not credential.strip():

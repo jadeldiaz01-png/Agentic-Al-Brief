@@ -53,3 +53,44 @@ authorized in this proposal.
 NVIDIA source pages:
 https://build.nvidia.com/nvidia/nemotron-3-ultra-550b-a55b
 https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-ultra-550b-a55b-infer
+
+
+## G3 billing/readiness evidence update (2026-10-11; public-only)
+
+**Confirmed publicly**: the NVIDIA-hosted Nemotron 3 Ultra model page displays
+"Free Endpoint: Available" and "Start building with a free API endpoint".
+NVIDIA NIM documents free developer access for **prototyping** and distinguishes
+development/testing from production. Sources:
+
+- https://build.nvidia.com/nvidia/nemotron-3-ultra-550b-a55b
+- https://docs.api.nvidia.com/nim/docs/product
+- https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-ultra-550b-a55b-infer
+
+**Not certified for the protected NVIDIA_API_KEY**: model entitlement, remaining
+credits/quotas, billing account status, pricing after trial or exhausted credits,
+hard provider-enforced zero-spend conditions, exact API rate limits, and contractual
+rights for any commercial or production usage. Public "Free Endpoint" messaging
+does NOT prove this secret is entitled or that unexpected charges are impossible.
+
+**Before any authenticated request**, a human authorized for the account should
+check the official NVIDIA API catalog while authenticated, recording only
+redacted evidence of service/account tier, remaining credits, whether billing
+is enabled or automatic charge is possible, current quota/rate limits and
+an explicit account-specific no-charge guarantee or separately approved
+spending ceiling. Never copy/paste the NVIDIA_API_KEY or account identifiers.
+
+Source-controlled independent guards added to the G3 probe:
+
+- G3_AUTHENTICATED_PROBE_LOCKED=True (unchanged)
+- G3_BILLING_CERTIFICATION_LOCKED=True (new)
+- G3_EXECUTION_APPROVAL_LOCKED=True (new)
+
+Clearing only the probe lock, using zero-valued quotes, or adding environment
+variables cannot bypass the additional guards. Removing any lock requires
+separate independently reviewed source code and explicit authorization.
+Offline tests simulate all gates with in-memory dummy clients; that does
+not certify NVIDIA connectivity, usage, or billing.
+
+**Decision as of this revision: G3_ACCOUNT_BILLING=NO_GO**.
+No live calls, workflow dispatches, changes to secrets, provider activation,
+merges or deployments are authorized by this document.
