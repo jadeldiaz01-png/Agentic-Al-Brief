@@ -19,7 +19,7 @@ def response(text="NVIDIA_G3_OK", model=g3.NEMOTRON_MODEL_ID, inp=18, out=8, fin
 
 def fixture_quote():
     # Zero rates are synthetic unit-test fixtures; NOT NVIDIA billing evidence.
-    return g3.G3PricingQuote(Decimal("0"), Decimal("0"), "SYNTHETIC_TEST_ONLY")
+    return g3.G3PricingQuote(Decimal(0), Decimal(0), "SYNTHETIC_TEST_ONLY")
 
 
 def test_source_lock_blocks_before_credentials_and_client(monkeypatch):
@@ -27,7 +27,7 @@ def test_source_lock_blocks_before_credentials_and_client(monkeypatch):
     with pytest.raises(g3.G3ProbeDenied, match="G3_SOURCE_LOCKED"):
         g3.run_authenticated_probe(credential="synthetic-test-key", quote=fixture_quote())
     assert g3.G3_AUTHENTICATED_PROBE_LOCKED is True
-    assert g3.G3_MAX_AUTONOMOUS_SPEND_USD == Decimal("0")
+    assert g3.G3_MAX_AUTONOMOUS_SPEND_USD == Decimal(0)
 
 
 def test_request_is_fixed_one_call_no_tools_and_output_limited():
@@ -87,7 +87,7 @@ def test_good_fake_response_emits_only_sanitized_usage():
 def test_positive_spend_blocks_client_even_in_simulated_unlocked_path(monkeypatch):
     monkeypatch.setattr(g3, "G3_AUTHENTICATED_PROBE_LOCKED", False)
     monkeypatch.setattr(g3, "OpenAI", lambda **kwargs: pytest.fail("Client must not be called"))
-    price = g3.G3PricingQuote(Decimal("1"), Decimal("1"), "SYNTHETIC")
+    price = g3.G3PricingQuote(Decimal(1), Decimal(1), "SYNTHETIC")
     with pytest.raises(g3.G3ProbeDenied, match="G3_COST_NOT_AUTHORIZED"):
         g3.run_authenticated_probe(credential="synthetic-key", quote=price)
 

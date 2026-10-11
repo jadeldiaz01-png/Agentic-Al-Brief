@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_CEILING
+from decimal import ROUND_CEILING, Decimal
 from typing import Any
 
 from openai import OpenAI
@@ -13,7 +13,7 @@ G3_AUTHENTICATED_PROBE_LOCKED = True
 G3_MAX_CALLS = 1
 G3_QUOTED_INPUT_TOKENS = 128  # Quote only: NOT a tokenizer-enforced maximum.
 G3_MAX_OUTPUT_TOKENS = 64
-G3_MAX_AUTONOMOUS_SPEND_USD = Decimal("0")
+G3_MAX_AUTONOMOUS_SPEND_USD = Decimal(0)
 G3_TIMEOUT_SECONDS = 45.0
 G3_FIXED_PROMPT = "Reply with exactly NVIDIA_G3_OK and no other text."
 G3_EXPECTED = "NVIDIA_G3_OK"
@@ -116,5 +116,5 @@ def run_authenticated_probe(*, credential: str, quote: G3PricingQuote) -> dict[s
         return validate_response(result)
     except G3ProbeDenied:
         raise
-    except Exception:
+    except Exception:  # noqa: BLE001 - sanitize arbitrary SDK exceptions before logging
         raise G3ProbeDenied("G3_PROVIDER_OR_NETWORK_DENIED") from None
