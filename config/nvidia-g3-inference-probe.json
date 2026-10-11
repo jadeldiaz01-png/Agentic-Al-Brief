@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "project": "PRJ-INTEL-001/BRIEF-LAB",
+  "mode": "G3_PREPARE_ONLY_SOURCE_LOCKED",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b",
+  "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+  "max_calls": 1,
+  "max_output_tokens": 64,
+  "max_quote_input_tokens": 128,
+  "input_token_quote_is_hard_limit": false,
+  "timeout_seconds": 45,
+  "retries": 0,
+  "max_autonomous_spend_usd": "0",
+  "actual_pricing_verified": false,
+  "authenticated_inference_authorized": false,
+  "g3_source_locked": true,
+  "nvidia_runtime_activation_locked": true,
+  "fallback_to_openai": false,
+  "protected_environment_for_future": "nvidia-connection-check",
+  "human_reviewer_for_future": "flotaopd-del",
+  "production_authorized": false,
+  "next_gate": "Independent code review of this exact HEAD, separate merge, certified billing, independent source unlock, separately approved one live call"
+}
