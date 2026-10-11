@@ -114,3 +114,59 @@ def test_canonical_manifest_remains_locked():
     assert data["activation_switch"] == "UNAVAILABLE_IN_THIS_REVISION"
     assert data["auto_fallback"] is False
     assert provider.NEMOTRON_ACTIVATION_LOCKED is True
+
+
+def test_declarative_primary_and_secondary_never_construct_clients(isolated):
+    plan = provider.describe_provider_routing()
+    assert plan.target_primary == "nvidia"
+    assert plan.target_primary_model == provider.NEMOTRON_MODEL_ID
+    assert plan.target_secondary == "openai"
+    assert plan.target_secondary_model == provider.LEGACY_MODEL_ID
+    assert plan.runtime_default_while_locked == "openai"
+    assert plan.primary_activation_locked is True
+    assert plan.automatic_failover is False
+    assert plan.secondary_promotion_requires_human_gate is True
+    assert provider.AUTO_FAILOVER_ENABLED is False
+    assert isolated == []
+
+
+@pytest.mark.parametrize("flags", [
+    {"AGIA_AUTO_FALLBACK": "openai"},
+    {"AGIA_SECONDARY_LLM_PROVIDER": "openai"},
+    {"AGIA_ALLOW_SECONDARY_ON_FAILURE": "true"},
+    {"AGIA_NVIDIA_APPROVED": "true", "PRODUCTION_AUTHORIZED": "true"},
+])
+def test_unverified_nvidia_never_falls_back_to_openai(isolated, flags):
+    # A failed NVIDIA request must fail closed, never silently use OpenAI.
+    env = {
+        "AGIA_PRIMARY_LLM_PROVIDER": "nvidia",
+        "NVIDIA_API_KEY": "synthetic-test-value",
+        **flags,
+    }
+    with pytest.raises(provider.ProviderConfigurationError, match="NVIDIA_ACTIVATION_BLOCKED"):
+        provider.select_primary_model(env)
+    assert isolated == []
+
+
+def test_openai_is_explicit_interim_route_not_automatic_fallback(isolated):
+    selection = provider.select_primary_model({"AGIA_PRIMARY_LLM_PROVIDER": "openai"})
+    assert selection.provider == "openai"
+    assert selection.model == provider.OPENAI_SECONDARY_MODEL_ID
+    assert isolated == []
+
+
+def test_manifest_provider_plan_preserves_prepare_only_and_no_fallback():
+    data = json.loads(Path("config/nemotron-3-ultra-primary.json").read_text())
+    plan = provider.describe_provider_routing()
+    assert data["primary_provider_target"] == plan.target_primary
+    assert data["primary_model_target"] == plan.target_primary_model
+    assert data["secondary_provider_target"] == plan.target_secondary
+    assert data["secondary_model_id"] == plan.target_secondary_model
+    assert data["secondary_selection_policy"] == "EXPLICIT_HUMAN_GATE_NO_AUTOMATIC_FAILOVER"
+    assert data["secondary_runtime_mode"] == "EXISTING_OPENAI_DEFAULT_UNTIL_NVIDIA_CERTIFIED"
+    assert data["fallback_on_primary_failure"] is False
+    assert data["auto_fallback"] is False
+    assert data["runtime_provider_default"] == "openai"
+    assert data["activation_status"] == "PREPARE_ONLY_CODE_LOCKED"
+    assert data["production_authorized"] is False
+    assert data["max_autonomous_capital_usd"] == 0

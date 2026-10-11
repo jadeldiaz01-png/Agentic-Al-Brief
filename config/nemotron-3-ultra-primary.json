@@ -40,5 +40,12 @@
     "writer": "disabled_for_json_compatibility_candidate"
   },
   "structured_output_proof": "OFFLINE_NEGATIVE_TESTS_ONLY",
-  "tool_calling_proof": "UNVERIFIED_REQUIRES_AUTHENTICATED_STAGING"
+  "tool_calling_proof": "UNVERIFIED_REQUIRES_AUTHENTICATED_STAGING",
+  "primary_provider_target": "nvidia",
+  "primary_model_target": "nvidia/nemotron-3-ultra-550b-a55b",
+  "secondary_provider_target": "openai",
+  "secondary_model_id": "gpt-5.6-luna",
+  "secondary_selection_policy": "EXPLICIT_HUMAN_GATE_NO_AUTOMATIC_FAILOVER",
+  "secondary_runtime_mode": "EXISTING_OPENAI_DEFAULT_UNTIL_NVIDIA_CERTIFIED",
+  "fallback_on_primary_failure": false
 }
