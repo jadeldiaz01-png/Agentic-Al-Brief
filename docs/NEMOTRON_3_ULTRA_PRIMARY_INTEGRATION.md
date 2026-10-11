@@ -64,3 +64,29 @@ Official reference: https://build.nvidia.com/nvidia/nemotron-3-ultra-550b-a55b
   `human_approval_verified=true`. A trusted approval receipt verified by an
   external authority does not yet exist; no write allowance is introduced.
 - No model, workflow, runtime, secret or GitHub permissions are activated.
+
+
+## G1 provider routing plan — PREPARE_ONLY (2026-10-11)
+
+- **Target primary:** NVIDIA Nemotron 3 Ultra; this is the desired
+  architecture, not an activated network connection.
+- **Target secondary:** existing OpenAI route, for separately approved
+  human-controlled selection only. The existing runtime default remains
+  OpenAI until NVIDIA credentials, real inference, tool calling, JSON output,
+  egress, costs, rollback and human promotion are certified.
+- **No automatic failover:** if NVIDIA is selected while its code lock is
+  in force, the application raises a fail-closed configuration error; it
+  never silently routes that request to OpenAI, even with override flags.
+- `describe_provider_routing()` is a pure declarative plan: importing it
+  or reading the manifest does not instantiate clients or make any calls.
+- `NEMOTRON_ACTIVATION_LOCKED=True` remains in source; removing it,
+  changing the default provider, allowing fallback, and deploying each
+  require new, independent, exact-SHA human gates.
+- **Secret presence PREPARE_ONLY:** the GitHub Actions manual, protected
+  environment job is independent of the desired provider selector. It
+  checks only whether the protected `NVIDIA_API_KEY` value is nonempty,
+  emits YES/NO, and never connects to the provider or selects a model.
+  It still requires exact main SHA, manual confirmation and environment
+  reviewer approval. Merging this PR **does not authorize any dispatch**.
+- No provider-level credentials are included in this PR, no NVIDIA calls
+  are made, and production remains unauthorized.

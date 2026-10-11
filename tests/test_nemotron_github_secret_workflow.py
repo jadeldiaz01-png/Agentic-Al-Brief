@@ -18,7 +18,9 @@ def test_secret_presence_workflow_requires_manual_dispatch_only() -> None:
 def test_secret_presence_never_contacts_provider_or_discloses_value() -> None:
     content = WORKFLOW.read_text(encoding="utf-8")
     assert "${{ secrets.NVIDIA_API_KEY }}" in content
-    assert "${{ vars.AGIA_PRIMARY_LLM_PROVIDER }}" in content
+    assert "${{ vars.AGIA_PRIMARY_LLM_PROVIDER }}" not in content
+    assert "AGIA_PRIMARY_LLM_PROVIDER" not in content
+    assert "PROVIDER_SELECTION=NOT_ATTEMPTED" in content
     assert '[[ -z "${NVIDIA_API_KEY:-}" ]]' in content
     assert "NVIDIA_SECRET_PRESENT=YES" in content
     assert "NVIDIA_API_CONTACT=NOT_ATTEMPTED" in content
@@ -35,6 +37,6 @@ def test_secret_check_demands_exact_main_sha_and_no_activation() -> None:
     assert 'CHECK_NVIDIA_SECRET_PRESENCE_ONLY' in content
     assert "EXPECTED_SHA" in content
     assert "ACTUAL_SHA" in content
-    assert '"openai"' in content
+    assert "PROVIDER_DEFAULT=DENY" not in content
     assert "PRODUCTION_AUTHORIZED=false" in content
     assert "MAX_AUTONOMOUS_CAPITAL_USD=0" in content

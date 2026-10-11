@@ -17,6 +17,8 @@ from openai import AsyncOpenAI
 NEMOTRON_MODEL_ID = "nvidia/nemotron-3-ultra-550b-a55b"
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
 LEGACY_MODEL_ID = "gpt-5.6-luna"
+OPENAI_SECONDARY_MODEL_ID = LEGACY_MODEL_ID
+AUTO_FAILOVER_ENABLED = False
 NEMOTRON_ACTIVATION_LOCKED = True
 NemotronRole = Literal["supervisor", "research", "verifier", "writer"]
 
@@ -30,6 +32,34 @@ class PrimaryModelSelection:
     provider: Literal["openai", "nvidia"]
     model: str | OpenAIChatCompletionsModel
     model_settings: ModelSettings | None
+
+
+@dataclass(frozen=True)
+class ProviderRoutingPlan:
+    """Declarative target only: never constructs clients or enables routing."""
+
+    target_primary: Literal["nvidia"]
+    target_primary_model: str
+    target_secondary: Literal["openai"]
+    target_secondary_model: str
+    automatic_failover: Literal[False]
+    secondary_promotion_requires_human_gate: Literal[True]
+    runtime_default_while_locked: Literal["openai"]
+    primary_activation_locked: bool
+
+
+def describe_provider_routing() -> ProviderRoutingPlan:
+    """Expose the intended priority without altering runtime provider selection."""
+    return ProviderRoutingPlan(
+        target_primary="nvidia",
+        target_primary_model=NEMOTRON_MODEL_ID,
+        target_secondary="openai",
+        target_secondary_model=OPENAI_SECONDARY_MODEL_ID,
+        automatic_failover=False,
+        secondary_promotion_requires_human_gate=True,
+        runtime_default_while_locked="openai",
+        primary_activation_locked=NEMOTRON_ACTIVATION_LOCKED,
+    )
 
 
 def nemotron_settings(role: NemotronRole = "research") -> ModelSettings:
@@ -94,6 +124,7 @@ def select_primary_model(
     env = os.environ if environ is None else environ
     provider = env.get("AGIA_PRIMARY_LLM_PROVIDER", "openai").strip().lower()
     if provider == "openai":
+        # Existing safe default while NVIDIA is locked; NOT failure fallback.
         return PrimaryModelSelection("openai", LEGACY_MODEL_ID, None)
     if provider != "nvidia":
         raise ProviderConfigurationError("Unknown primary LLM provider")
