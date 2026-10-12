@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b",
+  "environment": "nvidia-connection-check",
+  "observed_at_utc": null,
+  "source_kind": "NOT_CAPTURED",
+  "developer_program_entitlement": "UNKNOWN",
+  "model_access": "UNKNOWN",
+  "billing_terms": "UNKNOWN",
+  "automatic_charges": "UNKNOWN",
+  "enforced_zero_charge": "UNKNOWN",
+  "remaining_quota": "UNKNOWN",
+  "usage_rights": "UNKNOWN",
+  "human_review": "PENDING"
+}
