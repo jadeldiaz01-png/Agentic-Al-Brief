@@ -65,7 +65,13 @@ def assess_account_evidence(evidence: object) -> dict[str, Any]:
     if observed is not None and not valid_utc(observed):
         raise InvalidAccountEvidence("G3_EVIDENCE_TIME_INVALID")
     if evidence["source_kind"] == "NOT_CAPTURED":
-        if observed is not None or any(evidence[name] != "UNKNOWN" for name in POSITIVE_ASSERTIONS):
+        # With no captured source, no account field—positive or negative—may
+        # be asserted. Keep the intake strictly unknown until human observation.
+        unobserved_claims = (
+            name for name in STATUS_VALUES
+            if name not in {"source_kind", "human_review"}
+        )
+        if observed is not None or any(evidence[name] != "UNKNOWN" for name in unobserved_claims):
             raise InvalidAccountEvidence("G3_EVIDENCE_UNSUPPORTED_CLAIM")
     elif observed is None:
         raise InvalidAccountEvidence("G3_EVIDENCE_TIME_REQUIRED")
