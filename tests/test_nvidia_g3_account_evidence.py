@@ -88,6 +88,22 @@ def test_unobserved_source_cannot_assert_entitlement():
         g3.assess_account_evidence(report)
 
 
+@pytest.mark.parametrize("field,claim", [
+    ("developer_program_entitlement", "NOT_ENTITLED"),
+    ("model_access", "NOT_AVAILABLE"),
+    ("billing_terms", "CHARGES_POSSIBLE"),
+    ("automatic_charges", "ENABLED_IN_ACCOUNT"),
+    ("enforced_zero_charge", "NOT_ENFORCED"),
+    ("remaining_quota", "EXHAUSTED"),
+    ("usage_rights", "OTHER_TERMS_REQUIRE_REVIEW"),
+])
+def test_unobserved_source_cannot_assert_negative_or_risky_claims(field, claim):
+    report = template()
+    report[field] = claim
+    with pytest.raises(g3.InvalidAccountEvidence, match="G3_EVIDENCE_UNSUPPORTED_CLAIM"):
+        g3.assess_account_evidence(report)
+
+
 def test_claimed_authenticated_view_requires_timestamp():
     report = optimistic_claims()
     report["observed_at_utc"] = None
